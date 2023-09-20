@@ -1,5 +1,3 @@
-[[toc]]
-
 # **Research Proposal** 
 
 >**_Trying to solve distribution shift_**
