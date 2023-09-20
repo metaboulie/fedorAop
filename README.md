@@ -1,4 +1,4 @@
-[toc]
+[[toc]]
 
 # **Research Proposal** 
 
@@ -17,7 +17,7 @@
 - Open your terminal
 
 ```bash
-git clone 
+git clone https://github.com/{YOURGITHUBID}/OptimizationTheoryProject
 cd OptimizationTheoryProject
 ls  # or `dir` in windows, the `Datasets` folder should appear
 pip install -r requirements.txt -U
@@ -114,13 +114,13 @@ if test_label_shift(train_set, test_set):
 - `batch_size` = $\frac 23$ (`in_features`+`out_features`)
 
 ## Results
-<img src="/Users/chanhuizhihou/Desktop/OptimizationProject/loss_vs_epoch_train.png" alt="loss_vs_epoch_train" style="zoom:50%;" />
+<img src="loss_vs_epoch_train.png" alt="loss_vs_epoch_train" style="zoom:50%;" />
 
-<img src="/Users/chanhuizhihou/Desktop/OptimizationProject/loss_vs_epoch_test.png" alt="loss_vs_epoch_test" style="zoom:50%;" />
+<img src="loss_vs_epoch_test.png" alt="loss_vs_epoch_test" style="zoom:50%;" />
 
-<img src="/Users/chanhuizhihou/Desktop/OptimizationProject/metrics_by_dataset_train.png" alt="metrics_by_dataset_train" style="zoom:50%;" />
+<img src="metrics_by_dataset_train.png" alt="metrics_by_dataset_train" style="zoom:50%;" />
 
-<img src="/Users/chanhuizhihou/Desktop/OptimizationProject/metrics_by_dataset_test.png" alt="metrics_by_dataset_test" style="zoom:50%;" />
+<img src="metrics_by_dataset_test.png" alt="metrics_by_dataset_test" style="zoom:50%;" />
 
 ## Issues
 - Model generates pretty terribly in "FACS_CD8" dataset currently
