@@ -1,0 +1,9 @@
+torch
+scipy
+numpy
+anndata
+scikit-learn
+pre-commit
+black
+polars
+plotly

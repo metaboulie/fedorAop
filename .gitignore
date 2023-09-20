@@ -1,0 +1,13 @@
+codes
+.idea
+ref.
+Datasets
+Models
+.DS_Store
+unit-test.py
+ProportionPrediction.pptx
+*.html
+
+# won't be ignored in feature
+hyptest.py
+view.py
