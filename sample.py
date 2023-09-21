@@ -19,7 +19,13 @@ def prosGenerator(
 
 def featureLabelSplit(data: np.ndarray) -> Tuple[torch.Tensor, torch.Tensor]:
     """Given a dataset, split it into feature-set and target-set"""
-    assert isinstance(data, np.ndarray)
+    try:
+        assert isinstance(data, np.ndarray)
+    except AssertionError as e:
+        e.add_note("The type of the input data must be numpy.ndarray")
+        raise
+    else:
+        pass
 
     X = data[:, :-1]
     y = data[:, -1]

@@ -2,11 +2,11 @@
 
 >**_Trying to solve distribution shift_**
 ## Requirements
- - Python 3.10 +
+ - Python 3.11 +
  - git 
  - requirements.txt
  - Optional
-   - Pycharm 2023.1.3 or Later 
+   - Pycharm 2023.1.4 or Later 
 
 ## Usage
 - Make sure you've installed [git](https://git-scm.com/downloads) 
