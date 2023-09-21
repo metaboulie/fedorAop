@@ -22,7 +22,7 @@ def read_h5ad_datasets(directory: str) -> Dict[str, ad.AnnData]:
 
 def convert_dataset_dict_to_np_dict(
     dataset_dict: Dict[str, ad.AnnData]
-) -> Dict[str, np.array]:
+) -> Dict[str, np.ndarray]:
     """
     Transform the data structure from ad.AnnData to np.array for training and testing.
     param dict_: a dictionary stores all the datasets
@@ -42,7 +42,7 @@ def convert_dataset_dict_to_np_dict(
     return dict(sorted(np_dict.items()))
 
 
-def get_data_dict(directory: str):
+def get_data_dict(directory: str) -> Dict[str, np.ndarray]:
     """
     Get the data_dict from the directory of the datasets
     """

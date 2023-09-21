@@ -9,7 +9,13 @@ from sample import *
 
 
 def trainLoop(
-    data, model: nn.Module, loss_fn, optimizer, count, correct: list, loss: list
+    data: np.ndarray,
+    model: nn.Module,
+    loss_fn,
+    optimizer,
+    count: int,
+    correct: list,
+    loss: list,
 ):
     """
     How the model is trained during every step.
@@ -43,7 +49,7 @@ def trainLoop(
         )
 
 
-def evaluateTest(data, model: nn.Module, loss_fn, test: bool = True):
+def evaluateTest(data: np.ndarray, model: nn.Module, loss_fn, test: bool = True) -> str:
     """
     Evaluate the performance of the model on the current stage
     """
@@ -64,7 +70,7 @@ def evaluateTest(data, model: nn.Module, loss_fn, test: bool = True):
     return test_loss
 
 
-def evaluateModel(data, model: nn.Module) -> list:
+def evaluateModel(data: np.ndarray, model: nn.Module) -> list:
     """
     Evaluate the performance of the trained model
     """
@@ -85,7 +91,7 @@ def evaluateModel(data, model: nn.Module) -> list:
 
 
 def earlyStopping(
-    loss_list: list, count, patience: int = 10, threshold: float = 1e-4
+    loss_list: list, count: int, patience: int = 10, threshold: float = 1e-4
 ) -> bool:
     """
     Stop training if no progress is made anymore
@@ -101,7 +107,7 @@ def earlyStopping(
     return False
 
 
-def countUniqueLabels(data: np.array):
+def countUniqueLabels(data: np.ndarray) -> int:
     # Extract the last column of the 2D NumPy array
     labels_column = data[:, -1]
 
@@ -111,13 +117,13 @@ def countUniqueLabels(data: np.array):
     return len(unique_labels)
 
 
-def createLossDataframe(data: List[List], epoch_count):
+def createLossDataframe(data: List[List], epoch_count: int) -> pl.DataFrame:
     schema = ["Dataset"] + [f"epoch{i}" for i in range(1, epoch_count + 1)]
 
     return pl.DataFrame(data, schema)
 
 
-def createMetricsDataframe(data: List[List]):
+def createMetricsDataframe(data: List[List]) -> pl.DataFrame:
     schema = [
         "Dataset",
         "f1 micro",
@@ -129,7 +135,7 @@ def createMetricsDataframe(data: List[List]):
     return pl.DataFrame(data, schema)
 
 
-def doesModelExist(directory: str, dataset_name: str):
+def doesModelExist(directory: str, dataset_name: str) -> Tuple[bool, str]:
     # Define the Models folder path
     models_folder = directory
 

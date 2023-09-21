@@ -1,5 +1,5 @@
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import scipy
@@ -8,7 +8,7 @@ import torch
 
 def prosGenerator(
     distribution: scipy.stats.rv_continuous = scipy.stats.norm, size: int = 100, *args
-) -> np.array:
+) -> np.ndarray:
     """
     Generate an 1D-array filled with probabilities.
     param distribution: how to generate each probability
@@ -17,7 +17,7 @@ def prosGenerator(
     return scipy.special.softmax(distribution.rvs(size=size, *args))
 
 
-def featureLabelSplit(data: np.array) -> torch.tensor:
+def featureLabelSplit(data: np.ndarray) -> Tuple[torch.Tensor, torch.Tensor]:
     """Given a dataset, split it into feature-set and target-set"""
     assert isinstance(data, np.ndarray)
 
@@ -41,17 +41,17 @@ class Resample:
     """
 
     batch_size: int = 64
-    data: np.array = field(default_factory=np.array, repr=False)
+    data: np.ndarray = field(default_factory=np.ndarray, repr=False)
     size: int = field(init=False)
-    pros: List[float] = field(init=False, repr=False)
-    choices: np.array = field(default_factory=np.array, init=False, repr=False)
+    pros: np.ndarray[float] = field(init=False, repr=False)
+    choices: np.ndarray = field(default_factory=np.ndarray, init=False, repr=False)
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.size = self.data.shape[0]
 
     def sample(
         self, distribution: scipy.stats.rv_continuous = scipy.stats.uniform, *args
-    ):
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         self.pros = prosGenerator(distribution=distribution, size=self.size, *args)
 
         self.choices = np.random.choice(
@@ -68,22 +68,22 @@ class DeepResample(Resample):
 
     """
 
-    labels: List[int] = field(default_factory=list)
+    labels: List[int] | np.ndarray[int] = field(default=None)
     lamb: float = 0.2
 
-    def __post_init__(self):
+    def __post_init__(self) -> None:
         self.size = self.data.shape[0]
 
     def sample(
         self, distribution: scipy.stats.rv_continuous = scipy.stats.uniform, *args
-    ):
+    ) -> None:
         self.pros = prosGenerator(distribution=distribution, size=self.size, *args)
         self.choices = np.random.choice(
             range(self.size), self.batch_size, False, self.pros
         )
 
     @property
-    def resample(self):
+    def resample(self) -> np.ndarray:
         return np.random.choice(
             self.choices, np.ceil(self.lamb * self.batch_size), False
         )
@@ -101,5 +101,5 @@ class DeepResample(Resample):
         pass
 
     @property
-    def dataSplit(self):
+    def dataSplit(self) -> Tuple[torch.Tensor, torch.Tensor]:
         return featureLabelSplit(self.data)

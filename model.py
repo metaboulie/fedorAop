@@ -1,8 +1,9 @@
+import torch
 from torch import nn
 
 
 class InputLayer(nn.Module):
-    def __init__(self, in_features):
+    def __init__(self, in_features: int):
         super().__init__()
         self.input_layer = nn.Linear(in_features, in_features)
 
@@ -12,7 +13,7 @@ class InputLayer(nn.Module):
 
 
 class EmbedLayer(nn.Module):
-    def __init__(self, in_features, out_features):
+    def __init__(self, in_features: int, out_features: int):
         super().__init__()
         self.embedding = nn.Linear(in_features, out_features)
 
@@ -24,8 +25,8 @@ class EmbedLayer(nn.Module):
 class RNNLayers(nn.Module):
     def __init__(
         self,
-        input_size,
-        hidden_size,
+        input_size: int,
+        hidden_size: int,
         num_layers: int = 2,
         batch_first: bool = True,
         dropout: float = 0.2,
@@ -47,7 +48,9 @@ class RNNLayers(nn.Module):
 
 
 class LSTMLayers(nn.Module):
-    def __init__(self, input_size, hidden_size, num_layers, dropout):
+    def __init__(
+        self, input_size: int, hidden_size: int, num_layers: int, dropout: float
+    ):
         super().__init__()
         self.layers = nn.LSTM(input_size, hidden_size, num_layers, dropout)
 
@@ -61,8 +64,8 @@ class LSTMLayers(nn.Module):
 class MLP(nn.Module):
     def __init__(
         self,
-        in_features,
-        out_features,
+        in_features: int,
+        out_features: int,
         n_layers: int = 2,
         dropout: float = 0.5,
         softmax: bool = True,

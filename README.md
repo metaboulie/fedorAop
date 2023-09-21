@@ -83,7 +83,7 @@ if test_label_shift(train_set, test_set):
 >>
 >>>**Linear** (`in_features`=n_features, `out_features`=n_features, `bias`=True)  
 >
->>>**Linear** (`in_features`=3000, `out_features`=300, `bias`=True)   
+>>>**Linear** (`in_features`=n_features, `out_features`=300, `bias`=True)   
 >
 >>### ***MLP***
 >>
