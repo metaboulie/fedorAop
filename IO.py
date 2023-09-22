@@ -3,6 +3,7 @@ from typing import Dict
 
 import anndata as ad
 import numpy as np
+import polars as pl
 from sklearn.preprocessing import LabelEncoder
 
 
@@ -42,11 +43,40 @@ def convert_dataset_dict_to_np_dict(
     return dict(sorted(np_dict.items()))
 
 
-def get_data_dict(directory: str) -> Dict[str, np.ndarray]:
+def convert_dataset_dict_to_df_dict(
+        dataset_dict: Dict[str, ad.AnnData]
+) -> Dict[str, pl.DataFrame]:
+    """
+    Transform the data structure from ad.AnnData to polars.DataFrame for training and testing.
+    param dict_: a dictionary stores all the datasets
+    return: the same dictionary other than the inner data-structure
+    """
+    df_dict = {}
+
+    for dataset_name, adata in dataset_dict.items():
+        data_dict = {
+            **{var_name: adata.X[:, i] for i, var_name in enumerate(adata.var_names)},
+            "cell_type": adata.obs["cell.type"],
+        }
+        df_dict[dataset_name] = pl.DataFrame(data_dict)
+
+    return dict(sorted(df_dict.items()))
+
+
+def get_data_dict(directory: str, returnType: str = 'np.ndarray') -> Dict[str, np.ndarray] | Dict[str, pl.DataFrame]:
     """
     Get the data_dict from the directory of the datasets
     """
-    return convert_dataset_dict_to_np_dict(read_h5ad_datasets(directory))
+    match returnType:
+
+        case 'np.ndarray':
+            return convert_dataset_dict_to_np_dict(read_h5ad_datasets(directory))
+
+        case 'pl.DataFrame' | 'pl.Dataframe':
+            return convert_dataset_dict_to_df_dict(read_h5ad_datasets(directory))
+
+        case _:
+            raise ValueError("Please enter a legal dataType.")
 
 
 # from deep_river.classification import RollingClassifier

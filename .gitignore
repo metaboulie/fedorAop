@@ -2,7 +2,7 @@ codes
 .idea
 ref.
 Datasets
-Models
+Models/
 .DS_Store
 unit-test.py
 ProportionPrediction.pptx
