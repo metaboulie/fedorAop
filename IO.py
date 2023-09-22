@@ -44,7 +44,7 @@ def convert_dataset_dict_to_np_dict(
 
 
 def convert_dataset_dict_to_df_dict(
-        dataset_dict: Dict[str, ad.AnnData]
+    dataset_dict: Dict[str, ad.AnnData]
 ) -> Dict[str, pl.DataFrame]:
     """
     Transform the data structure from ad.AnnData to polars.DataFrame for training and testing.
@@ -63,16 +63,17 @@ def convert_dataset_dict_to_df_dict(
     return dict(sorted(df_dict.items()))
 
 
-def get_data_dict(directory: str, returnType: str = 'np.ndarray') -> Dict[str, np.ndarray] | Dict[str, pl.DataFrame]:
+def get_data_dict(
+    directory: str, returnType: str = "np.ndarray"
+) -> Dict[str, np.ndarray] | Dict[str, pl.DataFrame]:
     """
     Get the data_dict from the directory of the datasets
     """
     match returnType:
-
-        case 'np.ndarray':
+        case "np.ndarray":
             return convert_dataset_dict_to_np_dict(read_h5ad_datasets(directory))
 
-        case 'pl.DataFrame' | 'pl.Dataframe':
+        case "pl.DataFrame" | "pl.Dataframe":
             return convert_dataset_dict_to_df_dict(read_h5ad_datasets(directory))
 
         case _:

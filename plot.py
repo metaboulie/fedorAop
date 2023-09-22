@@ -86,18 +86,18 @@ class DataSetStats:
 
     @property
     def countLabel(self):
-
         self.labelColumn = self.dataset.get_column(self.dataset.columns[-1])
 
         self.labelColumnName = self.labelColumn.name
 
         try:
-            assert self.labelColumn.dtype.__name__ == 'Categorical'
+            assert self.labelColumn.dtype.__name__ == "Categorical"
 
         except AssertionError as e:
             e.add_note(
                 f"The dtype of the last column of the dataset is {self.labelColumn.dtype}, "
-                f"it must be polars.Categorical.")
+                f"it must be polars.Categorical."
+            )
             raise
 
         return self.labelColumn.value_counts(parallel=True).sort(self.labelColumnName)
@@ -112,31 +112,41 @@ class DataSetStats:
                 dataset_name = train_name.split(sep="_t")[0]
                 train_stats = cls(dataset=df_train)
                 test_stats = cls(dataset=df_test)
-                doublePieCharts(train_stats.labelCounts[train_stats.labelColumnName],
-                                train_stats.labelCounts["counts"],
-                                test_stats.labelCounts["counts"],
-                                dataset_name)
+                doublePieCharts(
+                    train_stats.labelCounts[train_stats.labelColumnName],
+                    train_stats.labelCounts["counts"],
+                    test_stats.labelCounts["counts"],
+                    dataset_name,
+                )
 
             except StopIteration:
                 break
 
 
 def doublePieCharts(labels, train_values, test_values, dataset_name):
-
-    fig = make_subplots(rows=1, cols=2, specs=[[{'type': 'domain'}, {'type': 'domain'}]])
-    fig.add_trace(go.Pie(labels=labels, values=train_values, name=f"{dataset_name} Train"),
-                  1, 1)
-    fig.add_trace(go.Pie(labels=labels, values=test_values, name=f"{dataset_name} Test"),
-                  1, 2)
+    fig = make_subplots(
+        rows=1, cols=2, specs=[[{"type": "domain"}, {"type": "domain"}]]
+    )
+    fig.add_trace(
+        go.Pie(labels=labels, values=train_values, name=f"{dataset_name} Train"), 1, 1
+    )
+    fig.add_trace(
+        go.Pie(labels=labels, values=test_values, name=f"{dataset_name} Test"), 1, 2
+    )
 
     # Use `hole` to create a donut-like pie chart
-    fig.update_traces(hole=.4, hoverinfo="label+percent+name", textinfo="label+percent")
+    fig.update_traces(
+        hole=0.4, hoverinfo="label+percent+name", textinfo="label+percent"
+    )
 
     fig.update_layout(
         title_text=f"Proportion of labels in {dataset_name} dataset",
         # Add annotations in the center of the donut pies.
-        annotations=[dict(text='Train', x=0.18, y=0.5, font_size=20, showarrow=False),
-                     dict(text='Test', x=0.82, y=0.5, font_size=20, showarrow=False)])
+        annotations=[
+            dict(text="Train", x=0.18, y=0.5, font_size=20, showarrow=False),
+            dict(text="Test", x=0.82, y=0.5, font_size=20, showarrow=False),
+        ],
+    )
 
     pyo.plot(fig, filename=f"Proportion of labels in {dataset_name} dataset.html")
 
