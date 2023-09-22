@@ -6,8 +6,9 @@ import scipy
 import torch
 
 
+
 def prosGenerator(
-    distribution: scipy.stats.rv_continuous = scipy.stats.norm, size: int = 100, *args
+        distribution: scipy.stats.rv_continuous = scipy.stats.norm, size: int = 100, *args
 ) -> np.ndarray:
     """
     Generate an 1D-array filled with probabilities.
@@ -64,6 +65,54 @@ class Resample:
             range(self.size), self.batch_size, False, self.pros
         )
 
+        return featureLabelSplit(self.data[self.choices])
+
+
+@dataclass()
+class Bootstrap:
+    """
+    Usage:
+
+    """
+    batch_size: int = 64
+    data: np.ndarray = field(default_factory=np.ndarray, init=True, repr=False)
+    size: int = field(init=False)
+    changeIndexes: list = field(init=False)
+    choices: list = field(default_factory=list, init=False, repr=False)
+
+    def __post_init__(self) -> None:
+        self.size = self.data.shape[0]
+        self.sortDataByLabels()
+
+    @property
+    def countUniqueLabels(self) -> int:
+        # Extract the last column of the 2D NumPy array
+        labels_column = self.data[:, -1]
+
+        # Find the unique labels
+        unique_labels = np.unique(labels_column)
+
+        return len(unique_labels)
+
+    @property
+    def getNum(self):
+        numLabels = self.countUniqueLabels
+        nums = sorted(np.random.choice(range(1, self.batch_size), numLabels - 1, False))
+        nums.append(self.batch_size)
+        nums.insert(0, 0)
+        return np.diff(nums)
+
+    def sortDataByLabels(self):
+        self.data = self.data[self.data[:, -1].argsort()]
+        self.changeIndexes = list(np.where(np.diff(self.data[:, -1]))[0] + 1)
+        self.changeIndexes.append(self.data.shape[0])
+        self.changeIndexes.insert(0, 0)
+
+    @property
+    def sample(self):
+        nums = self.getNum
+        for i in range(len(self.changeIndexes) - 1):
+            self.choices += list(np.random.choice(range(self.changeIndexes[i], self.changeIndexes[i + 1]), nums[i], True))
         return featureLabelSplit(self.data[self.choices])
 
 

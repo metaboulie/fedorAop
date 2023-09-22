@@ -1,11 +1,13 @@
 import os
 
+import torch
+from typing import List, Tuple
 import polars as pl
 from sklearn.metrics import f1_score, precision_score, recall_score
 from torch import nn
-
-from config import *
-from sample import *
+import numpy as np
+from config import BATCH_SIZE
+from sample import (Bootstrap, featureLabelSplit)
 
 
 def trainLoop(
@@ -21,8 +23,9 @@ def trainLoop(
     How the model is trained during every step.
     """
     # Mini-Batch
-    sample_model = Resample(batch_size=BATCH_SIZE, data=data)
-    X_train, y_train = sample_model.sample()
+    # sample_model = Resample(batch_size=BATCH_SIZE, data=data)
+    sample_model = Bootstrap(batch_size=BATCH_SIZE, data=data)
+    X_train, y_train = sample_model.sample
 
     # Clarify the gradients
     optimizer.zero_grad()

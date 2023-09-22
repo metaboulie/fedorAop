@@ -148,6 +148,7 @@ def doublePieCharts(labels, train_values, test_values, dataset_name):
         ],
     )
 
+    # fig.write_image(f"images/Proportion of labels in {dataset_name} dataset.png")
     pyo.plot(fig, filename=f"Proportion of labels in {dataset_name} dataset.html")
 
 

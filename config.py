@@ -2,7 +2,7 @@ PATH = "Datasets"
 
 # For training
 BATCH_SIZE = 64
-N_EPOCHS = 2
+N_EPOCHS = 20
 
 # For optimizer, in this case, Adam
 BETA1, BETA2 = 1e-3, 0.999

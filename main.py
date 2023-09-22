@@ -15,7 +15,7 @@ from function import (
     createMetricsDataframe,
 )
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from plot import *
+from plot import (plotMetricsResults, plotLossResults)
 from IO import get_data_dict
 import torch
 from torch import nn
