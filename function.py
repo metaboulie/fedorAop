@@ -7,7 +7,7 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 from torch import nn
 import numpy as np
 from config import BATCH_SIZE
-from sample import (Bootstrap, featureLabelSplit)
+from sample import Bootstrap, featureLabelSplit
 
 
 def trainLoop(

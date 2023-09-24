@@ -73,7 +73,7 @@ def get_data_dict(
         case "np.ndarray":
             return convert_dataset_dict_to_np_dict(read_h5ad_datasets(directory))
 
-        case "pl.DataFrame" | "pl.Dataframe":
+        case "pl.DataFrame":
             return convert_dataset_dict_to_df_dict(read_h5ad_datasets(directory))
 
         case _:

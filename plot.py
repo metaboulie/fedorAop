@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 import plotly.graph_objs as go
 import plotly.offline as pyo
@@ -76,13 +77,25 @@ def plotMetricsResults(df: pl.DataFrame, split: str):
 
 @dataclass
 class DataSetStats:
+    """
+    Usage:
+
+    """
+
     dataset: pl.DataFrame
     labelColumn: pl.Series = field(init=False)
     labelColumnName: str = field(init=False)
     labelCounts: pl.DataFrame = field(init=False)
+    meanOfFeatures: dict[str, Any] = field(init=False, default_factory=dict)
+    maxOfFeatures: dict[str, Any] = field(init=False, default_factory=dict)
+    minOfFeatures: dict[str, Any] = field(init=False, default_factory=dict)
+    nameOfLabels: list = field(init=False, default_factory=list)
+    numOfFeatures: int = field(init=False, default_factory=int)
 
     def __post_init__(self):
+        self.numOfFeatures = self.dataset.shape[1] - 1
         self.labelCounts = self.countLabel
+        self.aggTargets()
 
     @property
     def countLabel(self):
@@ -90,17 +103,30 @@ class DataSetStats:
 
         self.labelColumnName = self.labelColumn.name
 
-        try:
-            assert self.labelColumn.dtype.__name__ == "Categorical"
-
-        except AssertionError as e:
-            e.add_note(
-                f"The dtype of the last column of the dataset is {self.labelColumn.dtype}, "
-                f"it must be polars.Categorical."
-            )
-            raise
+        # try:
+        #     assert self.labelColumn.dtype.__name__ == "Categorical"
+        #
+        # except AssertionError as e:
+        #     e.add_note(
+        #         f"The dtype of the last column of the dataset is {self.labelColumn.dtype}, "
+        #         f"it must be polars.Categorical."
+        #     )
+        #     raise
 
         return self.labelColumn.value_counts(parallel=True).sort(self.labelColumnName)
+
+    def aggTargets(self):
+        for targetGroup in self.dataset.partition_by(self.labelColumnName):
+            self.nameOfLabels.append(targetGroup[self.labelColumnName][0])
+            self.meanOfFeatures[
+                targetGroup[self.labelColumnName][0]
+            ] = targetGroup.mean().row(0)[:-1]
+            self.maxOfFeatures[
+                targetGroup[self.labelColumnName][0]
+            ] = targetGroup.max().row(0)[:-1]
+            self.minOfFeatures[
+                targetGroup[self.labelColumnName][0]
+            ] = targetGroup.min().row(0)[:-1]
 
     @classmethod
     def iterDatasets(cls, dataset_dict: dict[str, pl.DataFrame]):
@@ -116,6 +142,17 @@ class DataSetStats:
                     train_stats.labelCounts[train_stats.labelColumnName],
                     train_stats.labelCounts["counts"],
                     test_stats.labelCounts["counts"],
+                    dataset_name,
+                )
+                aggPlot(
+                    train_stats.nameOfLabels,
+                    list(range(1, train_stats.numOfFeatures + 1)),
+                    train_stats.meanOfFeatures,
+                    train_stats.maxOfFeatures,
+                    train_stats.minOfFeatures,
+                    test_stats.meanOfFeatures,
+                    test_stats.maxOfFeatures,
+                    test_stats.minOfFeatures,
                     dataset_name,
                 )
 
@@ -150,6 +187,86 @@ def doublePieCharts(labels, train_values, test_values, dataset_name):
 
     # fig.write_image(f"images/Proportion of labels in {dataset_name} dataset.png")
     pyo.plot(fig, filename=f"Proportion of labels in {dataset_name} dataset.html")
+
+
+def aggPlot(
+    nameOfLabels,
+    x: list,
+    y1: dict[str, tuple],
+    y1_upper: dict[str, tuple],
+    y1_lower: dict[str, tuple],
+    y2: dict[str, tuple],
+    y2_upper: dict[str, tuple],
+    y2_lower: dict[str, tuple],
+    dataset_name: str,
+):
+    x_rev = x[::-1]
+
+    fig = make_subplots(
+        rows=len(nameOfLabels),
+        cols=1,
+        shared_xaxes=True,
+        subplot_titles=nameOfLabels,
+    )
+
+    for i, nameOfLabel in enumerate(nameOfLabels):
+        # fig.add_trace(
+        #     go.Scatter(
+        #         x=x+x_rev,
+        #         y=y1_upper[nameOfLabel] + y1_lower[nameOfLabel],
+        #         fill="toself",
+        #         fillcolor="rgba(0,100,80,0.2)",
+        #         line_color="rgba(255,255,255,0)",
+        #         showlegend=False,
+        #         name="Train",
+        #     ),
+        #     row=i+1,
+        #     col=1,
+        # )
+        # fig.add_trace(
+        #     go.Scatter(
+        #         x=x + x_rev,
+        #         y=y2_upper[nameOfLabel] + y2_lower[nameOfLabel],
+        #         fill="toself",
+        #         fillcolor="rgba(0,176,246,0.2)",
+        #         line_color="rgba(255,255,255,0)",
+        #         showlegend=False,
+        #         name="Test",
+        #     ),
+        #     row=i + 1,
+        #     col=1,
+        # )
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=y1[nameOfLabel],
+                line_color="rgba(0,100,80,0.6)",
+                name="Train",
+            ),
+            row=i + 1,
+            col=1,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=x,
+                y=y2[nameOfLabel],
+                line_color="rgba(0,176,246,0.6)",
+                name="Test",
+            ),
+            row=i + 1,
+            col=1,
+        )
+
+    fig.update_layout(
+        height=1000 * len(nameOfLabels),
+        showlegend=False,
+        title_text=f"Comparison of different cell types in {dataset_name} dataset",
+    )
+
+    pyo.plot(
+        fig,
+        filename=f"Comparison of different cell types in {dataset_name} dataset.html",
+    )
 
 
 @dataclass
