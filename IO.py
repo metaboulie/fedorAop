@@ -66,9 +66,7 @@ def convert_dataset_dict_to_df_dict(
 def get_data_dict(
     directory: str, returnType: str = "np.ndarray"
 ) -> Dict[str, np.ndarray] | Dict[str, pl.DataFrame]:
-    """
-    Get the data_dict from the directory of the datasets
-    """
+
     match returnType:
         case "np.ndarray":
             return convert_dataset_dict_to_np_dict(read_h5ad_datasets(directory))
