@@ -7,7 +7,16 @@ import polars as pl
 from plotly.subplots import make_subplots
 
 
-def plotLossResults(df: pl.DataFrame, split: str):
+def plotLossResults(df: pl.DataFrame, split: str) -> None:
+    """_summary_
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        _description_
+    split : str
+        _description_
+    """
     # Extract the dataset names and epoch columns
     dataset_names = df["Dataset"].to_list()
 
@@ -41,7 +50,16 @@ def plotLossResults(df: pl.DataFrame, split: str):
     pyo.plot(fig, filename=f"loss_vs_epoch_{split}.html")
 
 
-def plotMetricsResults(df: pl.DataFrame, split: str):
+def plotMetricsResults(df: pl.DataFrame, split: str) -> None:
+    """_summary_
+
+    Parameters
+    ----------
+    df : pl.DataFrame
+        _description_
+    split : str
+        _description_
+    """
     # Extract the dataset names and epoch columns
     dataset_names = df["Dataset"].to_list()
     relevant_columns = ["f1 micro", "f1 macro", "precision weighted", "recall weighted"]

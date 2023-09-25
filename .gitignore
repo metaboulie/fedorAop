@@ -11,3 +11,4 @@ ProportionPrediction.pptx
 # won't be ignored in feature
 hyptest.py
 view.py
+*.vscode
