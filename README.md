@@ -59,7 +59,7 @@ git push
 > Methods to form different types of distribution shifts when training:
 
 - Every time when sampling the dataset to make a batch for training, distribute re-generalized probabilities(weights) to each observation, and sample the dataset
-  with these weights. (**_Corvariate Shift_**)
+  with these weights. (**_Cor-variate Shift_**)
 
 ```python
 # generate `size` probabilities with a distribution
@@ -85,7 +85,7 @@ if test_label_shift(train_set, test_set):
 - When sampling training samples, a proportion $\lambda$ of the samples have random noise added to their feature values, and $\lambda$ is tuned as a hyperparameter. (**_Concept Shift_**)
 
 ```python
- if test_concept_shift(train_set, test_set):
+if test_concept_shift(train_set, test_set):
   num = np.ceil(batch_size * lamb)
   choices = np.random.choice(range(len(X_batch)), num, False)
   for x in X[choices]:
@@ -143,13 +143,9 @@ if test_label_shift(train_set, test_set):
 
 ## Results
 
-<img src="/images/loss_vs_epoch_train.png" alt="loss_vs_epoch_train" style="zoom:50%;" />
+<img src="images/testLossMethod1.png" alt="testLossMethod1" style="zoom:50%;" />
 
-<img src="/images/loss_vs_epoch_test.png" alt="loss_vs_epoch_test" style="zoom:50%;" />
-
-<img src="/images/metrics_by_dataset_train.png" alt="metrics_by_dataset_train" style="zoom:50%;" />
-
-<img src="/images/metrics_by_dataset_test.png" alt="metrics_by_dataset_test" style="zoom:50%;" />
+<img src="images/testMetricsMethod1.png" alt="testMetricsMethod1" style="zoom:50%;" title="testMetricsMethod1"/>
 
 ## Issues
 

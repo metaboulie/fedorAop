@@ -34,8 +34,8 @@ train_loss_results, test_loss_results, train_metrics_results, test_metrics_resul
 
 def main():
     for i in range(len(datasets)):
-        # if i % 2 == 0:
-        if i != 3:
+        if i % 2 == 0:
+        # if i != 3:
             continue
 
         dataset = datasets[i]
@@ -44,7 +44,7 @@ def main():
         in_features = X.shape[1] - 1
         n_features = countUniqueLabels(X)
 
-        model_exist, model_path = doesModelExist("Models", dataset)
+        model_exist, model_path = doesModelExist("../Models", dataset)
 
         if model_exist:
             # There exists a trained model

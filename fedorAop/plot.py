@@ -200,12 +200,12 @@ class DataSetStats:
                 dataset_name = train_name.split(sep="_t")[0]
                 train_stats = cls(dataset=df_train)
                 test_stats = cls(dataset=df_test)
-                doublePieCharts(
-                    train_stats.labelCounts[train_stats.labelColumnName],
-                    train_stats.labelCounts["counts"],
-                    test_stats.labelCounts["counts"],
-                    dataset_name,
-                )
+                # doublePieCharts(
+                #     train_stats.labelCounts[train_stats.labelColumnName],
+                #     train_stats.labelCounts["counts"],
+                #     test_stats.labelCounts["counts"],
+                #     dataset_name,
+                # )
                 aggPlot(
                     train_stats.nameOfLabels,
                     list(range(1, train_stats.numOfFeatures + 1)),
@@ -302,7 +302,7 @@ def aggPlot(
             go.Scatter(
                 x=x,
                 y=y1[nameOfLabel],
-                line_color="rgba(0,100,80,0.6)",
+                line_color="rgba(0,100,80,0.7)",
                 name="Train",
             ),
             row=i + 1,
@@ -312,7 +312,7 @@ def aggPlot(
             go.Scatter(
                 x=x,
                 y=y2[nameOfLabel],
-                line_color="rgba(0,176,246,0.6)",
+                line_color="rgba(0,176,246,0.7)",
                 name="Test",
             ),
             row=i + 1,
@@ -320,7 +320,7 @@ def aggPlot(
         )
 
     fig.update_layout(
-        height=1000 * len(nameOfLabels),
+        # height=1000 * len(nameOfLabels),
         showlegend=False,
         title_text=f"Comparison of different cell types in {dataset_name} dataset",
     )

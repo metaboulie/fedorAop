@@ -93,6 +93,7 @@ class Sample(ABC):
         self.size = self.data.shape[0]
         self.numLabels = len(np.unique(self.data[:, -1]))
 
+    @property
     @abstractmethod
     def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Sample the data for BGD in different ways in different subClasses"""
@@ -119,6 +120,7 @@ class Resample(Sample):
 
     weights: np.ndarray[float] = field(init=False, repr=False)
 
+    @property
     def sample(
         self, distribution: scipy.stats.rv_continuous = scipy.stats.uniform, *args
     ) -> tuple[torch.Tensor, torch.Tensor]:
@@ -172,7 +174,7 @@ class Bootstrap(Sample):
         self.changeIndexes.insert(0, 0)
 
     @property
-    def sample(self):
+    def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Utilize the generated list to sample the data by Bootstrap,
         the number of sampled observations for each label should be equal to the relevant number in the list
         Returns

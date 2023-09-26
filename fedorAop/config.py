@@ -2,7 +2,7 @@ PATH = "../Datasets"
 
 # For training
 BATCH_SIZE = 64
-N_EPOCHS = 20
+N_EPOCHS = 10
 
 # For optimizer, in this case, Adam
 BETA1, BETA2 = 1e-3, 0.999
@@ -12,3 +12,5 @@ LR = 1e-3
 # For call-back
 PATIENCE = 3
 THRESHOLD = 1e-6
+
+# TODO: Implement a function to delete all .html files
