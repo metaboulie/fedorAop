@@ -2,8 +2,6 @@
 
 > **_Trying to solve distribution shift_**
 
-[TOC]
-
 ## Requirements
 
 - [Python 3.11 +](https://www.python.org/downloads/)
@@ -120,15 +118,15 @@ if test_label_shift(train_set, test_set):
 >
 > > > **Softmax** (`dim`=1)
 > >
-> > ## _Optimizer_
+> > ### _Optimizer_
 > >
 > > > **Adam** (`lr=LR`, `betas`=(BETA1, BETA2), `eps`=EPS)
 > >
-> > ## _LossFuntion_
+> > ### _LossFuntion_
 > >
 > > > **CrossEntropyLoss**
 > >
-> > ## _Learning-rate Scheduler_
+> > ### _Learning-rate Scheduler_
 > >
 > > > **ReduceLROnPlateau** ("min", `patience`=PATIENCE, `threshold`=THRESHOLD)
 
