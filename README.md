@@ -2,6 +2,15 @@
 
 > **_Trying to solve distribution shift_**
 
+- [**Research Proposal**](#research-proposal)
+  - [Requirements](#requirements)
+  - [Usage](#usage)
+  - [Ideas](#ideas)
+  - [Model](#model)
+  - [Results](#results)
+  - [Issues](#issues)
+  - [Further Considerations](#further-considerations)
+
 ## Requirements
 
 - [Python 3.11 +](https://www.python.org/downloads/)
