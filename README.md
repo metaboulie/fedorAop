@@ -5,7 +5,7 @@
 ## Requirements
 
 - [Python 3.11 +](https://www.python.org/downloads/)
-- [git](<(https://git-scm.com/downloads)>)
+- [git](https://git-scm.com/downloads)
 - [requirements.txt](requirements.txt)
 - Optional
   - [Pycharm](https://www.jetbrains.com/pycharm/download)
