@@ -19,7 +19,7 @@ def plotLossResults(df: pl.DataFrame, split: str) -> None:
     """
     # TODO: Store the result to the images folder as *.png
     try:
-        assert split == "train" | "test"
+        assert split == "train" or "test"
     except AssertionError as e:
         e.add_note("The value of `split` must be 'train' or 'test'")
         raise
@@ -57,7 +57,7 @@ def plotLossResults(df: pl.DataFrame, split: str) -> None:
 
 
 def plotMetricsResults(
-    df: pl.DataFrame, split: str, metricNames: list[str] = None
+        df: pl.DataFrame, split: str, metricNames: list[str] = None
 ) -> None:
     """Plot the evaluated metrics, each bar group is for a specific metric and
     in each group several datasets are aggregated
@@ -74,7 +74,7 @@ def plotMetricsResults(
     # TODO: Store the result to the images folder as *.png
     # Extract the dataset names and epoch columns
     dataset_names = df["Dataset"].to_list()
-    if metricNames == None:
+    if metricNames is None:
         metricNames = df.columns[1:]
     else:
         try:
@@ -252,15 +252,15 @@ def doublePieCharts(labels, train_values, test_values, dataset_name):
 
 
 def aggPlot(
-    nameOfLabels,
-    x: list,
-    y1: dict[str, tuple],
-    y1_upper: dict[str, tuple],
-    y1_lower: dict[str, tuple],
-    y2: dict[str, tuple],
-    y2_upper: dict[str, tuple],
-    y2_lower: dict[str, tuple],
-    dataset_name: str,
+        nameOfLabels,
+        x: list,
+        y1: dict[str, tuple],
+        y1_upper: dict[str, tuple],
+        y1_lower: dict[str, tuple],
+        y2: dict[str, tuple],
+        y2_upper: dict[str, tuple],
+        y2_lower: dict[str, tuple],
+        dataset_name: str,
 ):
     x_rev = x[::-1]
 

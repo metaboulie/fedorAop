@@ -31,7 +31,8 @@ def convert_dataset_dict_to_np_dict(
     dataset_dict: dict[str, ad.AnnData]
 ) -> dict[str, np.ndarray]:
     """Transform the data-structure of each dataset stored in the given dictionary from ad.AnnData to np.array,
-    encode the `cell_type` stored in adata.obs["cell.type"] to numeric labels for each observation, and append these encoded values to the data
+    encode the `cell_type` stored in adata.obs["cell.type"] to numeric labels for each observation,
+    and append these encoded values to the data
 
     Parameters
     ----------
@@ -41,7 +42,8 @@ def convert_dataset_dict_to_np_dict(
     Returns
     -------
     dict[str, np.ndarray]
-        A dictionary transformed from the input dictionary, with the last column encoded from the `cell_type` of each observation
+        A dictionary transformed from the input dictionary,
+        with the last column encoded from the `cell_type` of each observation
     """
     # TODO: Simplify this function, i.e. directly return
     np_dict = {}
@@ -72,7 +74,8 @@ def convert_dataset_dict_to_df_dict(
     Returns
     -------
     dict[str, pl.DataFrame]
-        A dictionary transformed from the input dictionary, with the last column being the `cell_type` of each observation
+        A dictionary transformed from the input dictionary,
+        with the last column being the `cell_type` of each observation
     """
     # TODO: Simplify this function, i.e. directly return
     df_dict = {}
@@ -90,7 +93,8 @@ def convert_dataset_dict_to_df_dict(
 def get_data_dict(
     directory: str, returnType: str = "np.ndarray"
 ) -> dict[str, np.ndarray] | dict[str, pl.DataFrame]:
-    """Read all datasets inside a given folder and use a dictionary to store them, user can choose the return data-structure of
+    """Read all datasets inside a given folder and use a dictionary to store them,
+    user can choose the return data-structure of
     the stored data
 
     Parameters
@@ -98,7 +102,8 @@ def get_data_dict(
     directory : str
         The directory where the Dataset folder is located.
     returnType : str, optional
-        The data-strcture of the data stored in the returned dictionary, by default "np.ndarray", can be either "np.ndarray" or "pl.DataFrame"
+        The data-structure of the data stored in the returned dictionary, by default "np.ndarray",
+        can be either "np.ndarray" or "pl.DataFrame"
 
     Returns
     -------
@@ -120,7 +125,7 @@ def get_data_dict(
 
         case _:
             raise ValueError(
-                "Please enter a legal dataType from [np.ndarry | pl.DataFrame]"
+                "Please enter a legal dataType from [np.ndarray | pl.DataFrame]"
             )
 
 

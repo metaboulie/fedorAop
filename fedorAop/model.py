@@ -1,4 +1,3 @@
-import torch
 from torch import nn
 
 
@@ -38,11 +37,11 @@ class EmbedLayer(nn.Module):
     in_features: int
         The number of input features
     out_features: int
-        The number of the targetted output features
+        The number of the targeted output features
 
     Attributes:
     ----------
-    embeddding:  nn.Linear
+    embedding:  nn.Linear
         The embedding layer for the neural network
 
     Usages:
@@ -120,7 +119,7 @@ class MLP(nn.Module):
     n_layers: int, optional
         The number of layers, should be >= 2, by default 2
     dropout: float, optional
-        The dropout rate for the Dropout moduel, by default .5
+        The dropout rate for the Dropout module, by default .5
     softmax: bool, optional
         Whether to softmax the output of the MLP, by default True
 
@@ -133,11 +132,11 @@ class MLP(nn.Module):
     n_layers: int, optional
         The number of layers, should be >= 2, by default 2
     dropout: float, optional
-        The dropout rate for the Dropout moduel, by default .5
+        The dropout rate for the Dropout module, by default .5
     softmax: bool, optional
         Whether to softmax the output of the MLP, by default True
     _inter_features: int, protected
-        The number of features fed into inter layers of MLP,
+        The number of features fed into interlayers of MLP,
         self._inter_features = (self.in_features + self.out_features) * 2 // 3
     layers: nn.ModuleList
         List every layer of the MLP
@@ -231,6 +230,6 @@ class NeuralNetwork(nn.Module):
 
         return X
 
-    # TODO: Add __repr__ method for every class in this moduel
+    # TODO: Add __repr__ method for every class in this module
     def __repr__(self):
         return f"{self.layers}"
