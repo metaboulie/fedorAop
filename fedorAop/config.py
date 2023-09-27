@@ -12,5 +12,3 @@ LR = 1e-3
 # For call-back
 PATIENCE = 3
 THRESHOLD = 1e-6
-
-# TODO: Implement a function to delete all .html files

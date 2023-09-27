@@ -1,54 +1,50 @@
-# [Research Proposal](https://github.com/metaboulie/OptimizationTheoryProject)
+<div align="center">
+ <h1><a href="https://github.com/metaboulie/fedorAop">Research Proposal</a></h1>
+</div>
 
 > 王梓奕 李一玄 刘俊豪 姚嘉浩 黄肖炜
 
-- [Research Proposal](#research-proposal)
-  - [背景](#背景)
-  - [意义](#意义)
-  - [探索性分析](#探索性分析)
-    - [结论](#结论)
-  - [思路](#思路)
-    - [神经网络](#神经网络)
-    - [抽样](#抽样)
-      - [方案 1](#方案-1)
-        - [结果](#结果)
-      - [方案 2](#方案-2)
-        - [结果](#结果-1)
-      - [方案 3](#方案-3)
-        - [结果](#结果-2)
-  - [TODOS](#todos)
-  - [未来](#未来)
+- [背景](#背景)
+- [意义](#意义)
+- [探索性分析](#探索性分析)
+- [思路](#思路)
+  - [神经网络](#神经网络)
+  - [抽样](#抽样)
+    - [方案 1](#方案-1)
+    - [方案 2](#方案-2)
+    - [方案 3](#方案-3)
+- [未来](#未来)
 
 ## 背景
 
 1. 协变量偏移
-   在假设标记函数不变的前提下，特征分布的变化导致的训练集和测试集存在本质上区别的分布偏移，称为协变量偏移。
+   训练数据和测试数据中的输入特征的分布不一致
 2. 标签偏移
-   标签在训练集和测试集中出现的频率不同，例如，在训练集中，很少出现细胞类别为 q 的样本，但在测试集中，同时存在细胞类别为 p 和细胞类别 q 为的样本，其中不变的是不同基因的表现。
+   训练数据和测试数据的特征分布相同，但标签分布发生了变化
 3. 概念偏移
-   除上述两种偏移之外，还存在标签本身概念发生变化的偏移，例如，对三大类癌细胞的定义发生变化。
+   在训练数据和测试数据之间，涉及到的概念或任务发生了变化
 
 ## 意义
 
-1. 提高模型在实际应用中的泛化能力和性能。
-2. 提高模型在不同标签分布下的预测准确性。
-3. 通过引入假设检验和超参数等方法，可以进一步解决不同类型的偏移问题，并提高模型的性能，改进预测方法。
+1. 提高模型在实际应用中的泛化能力及效率
+2. 提高模型对 `Adversarial Attack` 的抵御力
+3. 提高模型在不同偏移下的预测准确性
 
 ## 探索性分析
 
-- 统计五组训练集和测试集中各类别细胞的频率，绘制饼图，可看出各数据集均涉及协变量偏移
-  <img src="../images/labelProportions/Cancer.png" style="zoom:25%;"><img src="../images/labelProportions/FACS_CD8.png" style="zoom:25%;">
-  <img src="../images/labelProportions/PBMC_Batch.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_COVID.png" style="zoom:25%;">
-  <img src="../images/labelProportions/cSCC.png" style="zoom:25%;"><img src="../images/newplot.png" style="zoom:25%;">
+- 统计五组训练集和测试集中各类别细胞的频率，绘制饼图，可看出各数据集均涉及标签偏移
+<div align="center">
+<img src="../images/labelProportions/Cancer.png" style="zoom:25%;"><img src="../images/labelProportions/FACS_CD8.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_Batch.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_COVID.png" style="zoom:25%;"><img src="../images/labelProportions/cSCC.png" style="zoom:25%;"><img src="../images/newplot.png" style="zoom:25%;">
+</div>
 - 统计五组训练集和测试集中各类别细胞各基因的均值，绘制折线图，深色代表训练集与测试集的均值相近，浅蓝色与红色则代表该基因下均值存在差异， 结果发现在五组数据集中差异均不显著，给出`Cancer`数据集的折线图作为参考
 
-### 结论
+**结论**
 
-五组数据集主要问题在于较为严重的协变量偏移，因此针对该现象训练模型并拟合
+五组数据集主要问题在于较为严重的标签偏移，因此针对该现象训练模型并拟合
 
 ## 思路
 
-> > _How to resist distribution shift_
+> > _How to resist label shift_
 
 ### 神经网络
 
@@ -104,31 +100,28 @@
 使用一种概率分布 (默认为标准高斯分布) 为训练集中的所有样本生成一个概率 (权重)，基于这些权重抽取样本
 
 ```python
-def sample(self, distribution: scipy.stats.rv_continuous = scipy.stats.uniform, *args
-    ) -> tuple[torch.Tensor, torch.Tensor]:
-		"""Use the generated weights to sample the data
-
-    Parameters
-    ----------
-    distribution : scipy.stats.rv_continuous, optional
-        The distribution to generate each probability from, by default scipy.stats.uniform
+def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
+    """Use the generated weights to sample the datasuperClass Sample
 
     Returns
     -------
     tuple[torch.Tensor, torch.Tensor]
         X_Batch, y_Batch
     """
-    self.weights = prosGenerator(distribution=distribution, size=self.size, *args)
+    self.weights = prosGenerator(distribution=self.distribution, size=self.size)
+
     self.choices = np.random.choice(
         range(self.size), self.batch_size, False, self.weights
     )
+
     return featureLabelSplit(self.data[self.choices])
+
 ```
 
-##### 结果
-
+- 结果
+<div align="center">
 <img src="../images/trainMetricsMethod1.png" style="zoom:25%;"><img src="../images/testMetricsMethod1.png" style="zoom:25%;">
-
+</div>
 - 在 `FACS_CD8` 与 `PBMC_Batch` 上表现很差
 
 #### 方案 2
@@ -136,30 +129,30 @@ def sample(self, distribution: scipy.stats.rv_continuous = scipy.stats.uniform, 
 将要抽取的样本数随机分为 n 组，其中 n 为数据集中不同标签个数，每组中的样本数对应于各个标签中采用 Bootstrap 采样的样本数
 
 ```python
-  def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
-      """Utilize the generated counts to sample the data by Bootstrap
+def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
+    """Utilize the generated counts to sample the data by Bootstrap
 
-      Returns
-      -------
-      tuple[torch.Tensor, torch.Tensor]
-          X_Batch, y_Batch
-      """
-      nums = self.getNum  # A property returns the nums to be sampled for each label
-      for i in range(len(self.changeIndexes) - 1):
-          self.choices += list(
-              np.random.choice(
-                  range(self.changeIndexes[i], self.changeIndexes[i + 1]),
-                  nums[i],
-                  True,
-              )
-          )
-      return featureLabelSplit(self.data[self.choices])
+    Returns
+    -------
+    tuple[torch.Tensor, torch.Tensor]
+        X_Batch, y_Batch
+    """
+    nums = self.getNum  # A property returns the nums to be sampled for each label
+    for i in range(len(self.changeIndexes) - 1):
+        self.choices += list(
+            np.random.choice(
+                range(self.changeIndexes[i], self.changeIndexes[i + 1]),
+                nums[i],
+                True,
+            )
+        )
+    return featureLabelSplit(self.data[self.choices])
 ```
 
-##### 结果
-
+- 结果
+<div align="center">
 <img src="../images/trainMetricsMethod2.png" style="zoom:25%;"><img src="../images/testMetricsMethod2.png" style="zoom:25%;">
-
+<div>
 - 相比方案 1 有提升但在 `FACS_CD8` 与 `PBMC_Batch` 上表现依然很差
 
 #### 方案 3
@@ -167,17 +160,26 @@ def sample(self, distribution: scipy.stats.rv_continuous = scipy.stats.uniform, 
 利用训练集中各标签下数据的均值及标准差伪造样本并植入到训练集中
 
 ```python
-def sample(self) -> NotImplemented
-    return NotImplemented
+def iterLabels(self):
+    for i in range(len(self.changeIndexes) - 1):
+        numOfImputation = (
+            self.maxNum - self.changeIndexes[i + 1] + self.changeIndexes[i]
+        )  # * The number of the data to be imputed equals self.maxNum minus the count of observations of this label
+        labelMean, labelStd = self.featureStatsAgg(labelCounter=i)
+        imputedData = self.imputeData(i, numOfImputation, labelMean, labelStd)
+        self.data = np.concatenate((self.data, imputedData), axis=0)
+    self.size = self.data.shape[0]  # Update the size of the data
+
+def sample(self):
+    self.choices = np.random.choice(range(self.size), self.batch_size, True)
+    return featureLabelSplit(self.data[self.choices])
 ```
 
-##### 结果
-
-## TODOS
-
-1. 实现方案 3
-2. 改善研究背景与研究意义
-3. 编写函数删除所有 .html 文件
+- 结果
+<div align="center">
+<img src="../images/trainMetricsMethod3.png" style="zoom:25%;"><img src="../images/testMetricsMethod3.png" style="zoom:25%;">
+</div>
+- 相比方案 2 在 `FACS_CD8` 上有提升但在 `PBMC_Batch` 上表现更差
 
 ## 未来
 

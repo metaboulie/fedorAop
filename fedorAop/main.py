@@ -19,6 +19,7 @@ from plot import plotMetricsResults, plotLossResults
 from IO import get_data_dict
 import torch
 from torch import nn
+from sample import Resample, Bootstrap, SampleWithImputation
 
 data_dict = get_data_dict(PATH)
 
@@ -32,17 +33,17 @@ train_loss_results, test_loss_results, train_metrics_results, test_metrics_resul
 )
 
 
-def main():
+def main(sampleModel: str = "SampleWithImputation"):
     for i in range(len(datasets)):
         if i % 2 == 0:
-        # if i != 3:
+            # if i != 3:
             continue
 
         dataset = datasets[i]
-        X = data_dict[dataset]
+        data = data_dict[dataset]
 
-        in_features = X.shape[1] - 1
-        n_features = countUniqueLabels(X)
+        in_features = data.shape[1] - 1
+        n_features = countUniqueLabels(data)
 
         model_exist, model_path = doesModelExist("../Models", dataset)
 
@@ -65,7 +66,7 @@ def main():
         ######## print(model)
 
         # Number of steps in each epoch
-        n_steps = X.shape[0] // BATCH_SIZE
+        n_steps = data.shape[0] // BATCH_SIZE
 
         loss_fn = nn.CrossEntropyLoss()
 
@@ -82,6 +83,15 @@ def main():
             optimizer, "min", patience=PATIENCE, threshold=THRESHOLD
         )
 
+        match sampleModel:
+            case "Resample":
+                sample_model = Resample(data=data)
+            case "Bootstrap":
+                sample_model = Bootstrap(data=data)
+            case "SampleWithImputation":
+                sample_model = SampleWithImputation(data=data)
+                sample_model.iterLabels()
+
         # Training loop
         for epoch in range(N_EPOCHS):
             count, correct, loss = 0, [], []
@@ -92,7 +102,9 @@ def main():
 
             for step in range(n_steps):
                 count += 1
-                trainLoop(X, model, loss_fn, optimizer, count, correct, loss)
+                trainLoop(
+                    data, model, loss_fn, optimizer, count, correct, loss, sample_model
+                )
 
             train_loss = evaluateTest(data_dict[datasets[i]], model, loss_fn, False)
             test_loss = evaluateTest(data_dict[datasets[i - 1]], model, loss_fn)
