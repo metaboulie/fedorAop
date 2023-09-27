@@ -81,7 +81,7 @@
 > >
 > > > **Adam** (`lr`=LR, `betas`=(BETA1, BETA2), `eps`=EPS)
 > >
-> > ### **_LossFuntion_**
+> > ### **_Loss Function_**
 > >
 > > > **CrossEntropyLoss**
 > >
@@ -102,7 +102,7 @@
 
 ```python
 def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
-    """Use the generated weights to sample the datasuperClass Sample
+    """Use the generated weights to sample the data
 
     Returns
     -------
@@ -164,6 +164,7 @@ def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
 
 ```python
 def iterLabels(self):
+    """Iterate each label, and impute data"""
     for i in range(len(self.changeIndexes) - 1):
         numOfImputation = (
             self.maxNum - self.changeIndexes[i + 1] + self.changeIndexes[i]
@@ -174,6 +175,13 @@ def iterLabels(self):
     self.size = self.data.shape[0]  # Update the size of the data
 
 def sample(self):
+    """Sample the balanced dataset
+
+    Returns
+    -------
+    tuple[torch.Tensor, torch.Tensor]
+        X_Batch, y_Batch
+    """
     self.choices = np.random.choice(range(self.size), self.batch_size, True)
     return featureLabelSplit(self.data[self.choices])
 ```
