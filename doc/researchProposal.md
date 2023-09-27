@@ -36,6 +36,7 @@
 <div align="center">
 <img src="../images/labelProportions/Cancer.png" style="zoom:25%;"><img src="../images/labelProportions/FACS_CD8.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_Batch.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_COVID.png" style="zoom:25%;"><img src="../images/labelProportions/cSCC.png" style="zoom:25%;"><img src="../images/newplot.png" style="zoom:25%;">
 </div>
+
 - 统计五组训练集和测试集中各类别细胞各基因的均值，绘制折线图，深色代表训练集与测试集的均值相近，浅蓝色与红色则代表该基因下均值存在差异， 结果发现在五组数据集中差异均不显著，给出`Cancer`数据集的折线图作为参考
 
 **结论**
@@ -122,6 +123,7 @@ def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
 <div align="center">
 <img src="../images/trainMetricsMethod1.png" style="zoom:25%;"><img src="../images/testMetricsMethod1.png" style="zoom:25%;">
 </div>
+
 - 在 `FACS_CD8` 与 `PBMC_Batch` 上表现很差
 
 #### 方案 2
@@ -180,6 +182,7 @@ def sample(self):
 <div align="center">
 <img src="../images/trainMetricsMethod3.png" style="zoom:25%;"><img src="../images/testMetricsMethod3.png" style="zoom:25%;">
 </div>
+
 - 相比方案 2 在 `FACS_CD8` 上有提升但在 `PBMC_Batch` 上表现更差
 
 ## 未来
