@@ -152,7 +152,7 @@ def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
 - 结果
 <div align="center">
 <img src="../images/trainMetricsMethod2.png" style="zoom:25%;"><img src="../images/testMetricsMethod2.png" style="zoom:25%;">
-<div>
+</div>
 - 相比方案 1 有提升但在 `FACS_CD8` 与 `PBMC_Batch` 上表现依然很差
 
 #### 方案 3
