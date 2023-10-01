@@ -11,8 +11,9 @@ ProportionPrediction.pptx
 # won't be ignored in feature
 hyptest.py
 view.py
-*.vscode
+.vscode
 qodana.yaml
 .github
 fedorAop/tidy.py
-doc/ResearchProposal.pdf
+*.pdf
+TODO.md

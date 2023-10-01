@@ -293,7 +293,8 @@ class SampleWithImputation(Bootstrap):
         self.changeIndexes.insert(0, 0)
         self.maxNum = max(np.diff(self.changeIndexes))
 
-    def iterLabels(self):
+    def iterLabels(self) -> None:
+        """Iterate each label, and impute data"""
         for i in range(len(self.changeIndexes) - 1):
             numOfImputation = (
                 self.maxNum - self.changeIndexes[i + 1] + self.changeIndexes[i]
@@ -305,12 +306,30 @@ class SampleWithImputation(Bootstrap):
 
     @staticmethod
     def imputeData(
-        labelCounter: int, num: int, mean: np.ndarray, std: np.ndarray
+        encodedLabel: int, num: int, mean: np.ndarray, std: np.ndarray
     ) -> np.ndarray:
+        """Impute data for each label according to its means and stds for each feature
+
+        Parameters
+        ----------
+        encodedLabel : int
+            The encoded label for each label
+        num : int
+            How many observations should be imputed
+        mean : np.ndarray
+            An array storing mean values for each feature
+        std : np.ndarray
+            An array storing std values for each feature
+
+        Returns
+        -------
+        np.ndarray
+            Imputed data
+        """
         return np.concatenate(
             (
                 np.random.normal(loc=mean, scale=std, size=(num, len(mean))),
-                np.full((num, 1), labelCounter),
+                np.full((num, 1), encodedLabel),
             ),
             axis=1,
         )
@@ -336,10 +355,18 @@ class SampleWithImputation(Bootstrap):
         return labelData.mean(axis=0)[:-1], labelData.std(axis=0)[:-1]
 
     def sample(self):
+        """Sample the balanced dataset
+
+        Returns
+        -------
+        tuple[torch.Tensor, torch.Tensor]
+            X_Batch, y_Batch
+        """
         self.choices = np.random.choice(range(self.size), self.batch_size, True)
         return featureLabelSplit(self.data[self.choices])
 
 
+# NotImplemented
 @dataclass()
 class DeepResample(Resample):
     """NotImplemented"""

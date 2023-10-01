@@ -230,6 +230,5 @@ class NeuralNetwork(nn.Module):
 
         return X
 
-    # TODO: Add __repr__ method for every class in this module
     def __repr__(self):
         return f"{self.layers}"

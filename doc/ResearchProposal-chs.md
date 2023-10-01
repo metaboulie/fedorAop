@@ -47,45 +47,44 @@
 
 > > _How to resist label shift_
 
-### 神经网络
+### Neural Network
 
 - 调用 [**PyTorch**](https://pytorch.org/docs/stable/nn.html) 的 API 建立模型
 
-> ## _Architecture of Neural Network_
->
-> > ### **_Input and Embedding layers_**
-> >
+>## _Architecture_
+> > #### _Input and Embedding layers_
+>>
 > > > **Linear** (`in_features`=n_features, `out_features`=n_features, `bias`=True)
->
+> 
 > > > **Linear** (`in_features`=n_features, `out_features`=300, `bias`=True)
 >
-> > ### **_MLP_**
-> >
+> > #### _MLP_
+>>
 > > > **Linear** (`in_features`=300, `out_features`=\_inter_features, `bias`=True)
->
+> 
 > > > **BatchNorm1d** (`batch_size`=\_inter_features, `eps`=1e-05, `momentum`=0.1, `affine`=True, `    track_running_stats`=True)
-> > > **ELU** (`alpha`=1.0)
+>> > **ELU** (`alpha`=1.0)
 > > > **Dropout** (`p`=0.5, `inplace`=False)
->
+> 
 > > > **Linear** (`in_features`=\_inter_features, `out_features`=\_inter_features, `bias`=True)
 >
 > > > **BatchNorm1d** (`batch_size`=\_inter_features, `eps`=1e-05, `momentum`=0.1, `affine`=True, `track_running_stats`=True)
-> > > **ELU** (`alpha`=1.0)
+>> > **ELU** (`alpha`=1.0)
 > > > **Dropout** (`p`=0.5, `inplace`=False)
->
+> 
 > > > **Linear** (`in_features`=\_inter_features, `out_features`=n_labels, `bias`=True)
 >
 > > > **Softmax** (`dim`=1)
-> >
-> > ### **_Optimizer_**
+>>
+> > #### _Optimizer_
 > >
 > > > **Adam** (`lr`=LR, `betas`=(BETA1, BETA2), `eps`=EPS)
 > >
-> > ### **_Loss Function_**
+> > #### _Loss Function_
 > >
 > > > **CrossEntropyLoss**
 > >
-> > ### **_Learning-rate Scheduler_**
+> > #### _Learning-rate Scheduler_
 > >
 > > > **ReduceLROnPlateau** ("min", `patience`=PATIENCE, `threshold`=THRESHOLD)
 

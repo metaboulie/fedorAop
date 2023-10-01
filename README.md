@@ -1,14 +1,21 @@
 <div align="center">
   <h1>fedorAop: A Tool to solve distribution shift</h1>
+  <h6 align="right">
+    by presenting transfer learning models to you
+  </h6>
 </div>
 
-<br>
+<div>
+  <br>
+</div>
 
-> **_Under development_**
+> **_Stage 1: Under development_**
 
 - [Requirements](#requirements)
 - [Getting Started](#getting-started)
 - [Further Considerations](#further-considerations)
+- [Keep in mind](#keep-in-mind)
+- [Resources](#resources)
 
 ## Requirements
 
@@ -59,3 +66,11 @@ git push
 - Yeo-Johnson Transform (_Preprocessing_)
 - Online Machine Learning, e.g. deep-river
 - MLP-Mixer
+
+## Keep in mind
+
+> > **No classifier** will work well on **all distributions**
+
+## Resources
+
+……
