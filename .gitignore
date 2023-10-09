@@ -17,3 +17,5 @@ qodana.yaml
 fedorAop/tidy.py
 *.pdf
 TODO.md
+
+__pycache__/
