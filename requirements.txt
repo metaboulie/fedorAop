@@ -10,3 +10,6 @@ kaleido
 imblearn
 pytest
 deepdiff
+seaborn
+matplotlib
+pandas
