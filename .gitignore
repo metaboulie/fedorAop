@@ -21,4 +21,4 @@ TODO.md
 __pycache__/
 
 *.pytest_cache
-stats.py
+fedorAop/stats.py
