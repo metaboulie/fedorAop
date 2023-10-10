@@ -1,151 +1,223 @@
 import os
 
 import torch
-from typing import List, Tuple
-import polars as pl
 from sklearn.metrics import f1_score, precision_score, recall_score
 from torch import nn
 import numpy as np
-from config import BATCH_SIZE
-from sample import featureLabelSplit, Sample
+from fedorAop.config import N_STEPS_TO_PRINT
+from fedorAop.sample import featureLabelSplit, Sample, Bootstrap
+from imblearn.metrics import geometric_mean_score
 
 
-def trainLoop(
+def train_loop(
     data: np.ndarray,
     model: nn.Module,
     loss_fn,
     optimizer,
     count: int,
-    correct: list,
-    loss: list,
-    sampleModel: Sample,
+    sample_model: Sample = Bootstrap,
 ):
     """
-    How the model is trained during every step.
-    """
-    # Mini-Batch
-    X_train, y_train = sampleModel.sample
+    Trains the model during every step.
 
-    # Clarify the gradients
+    Parameters:
+    - data: np.ndarray
+        The dataset to train.
+    - model: nn.Module
+        The Neural Network.
+    - loss_fn: _type_
+        The loss function of the Neural Network.
+    - optimizer: _type_
+        The optimizer to perform gradient descent.
+    - count: int
+        The count of the current step.
+    - sample_model: Sample, optional
+        The model to resample the dataset, see sample.py for more details.
+        Defaults to Bootstrap.
+    """
+
+    # Utilize the sampling-model to resample the dataset
+    X_train, y_train = sample_model.sample
+
+    # Clear the gradients
     optimizer.zero_grad()
 
+    # Get the predictions of the neural network
     pred = model(X_train)
 
     # Calculate the loss
-    loss_fn = loss_fn(pred, y_train)
-
-    loss.append(loss_fn.item())
-
-    correct.append(np.sum(np.array(pred.argmax(1) == y_train)) / len(y_train))
+    _loss_fn = loss_fn(pred, y_train)
 
     # Calculate gradients
-    loss_fn.backward()
+    _loss_fn.backward()
 
-    # Gradient descent
+    # Perform gradient descent
     optimizer.step()
 
-    if count % 20 == 0:
-        correct_, loss_ = sum(correct) / len(correct), sum(loss) / len(loss)
-        print(
-            f"Accuracy: {(100 * correct_):>0.1f}%, loss: {loss_:>7f}  [{(BATCH_SIZE * count):>5d}/{data.shape[0]:>5d}]"
-        )
+    # Print result every M steps
+    if count % N_STEPS_TO_PRINT == 0:
+        evaluate(data=data, model=model, loss_fn=_loss_fn, mode="step")
 
 
-def evaluateTest(data: np.ndarray, model: nn.Module, loss_fn, test: bool = True) -> str:
+def evaluate(
+    data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step"
+) -> list | float | None:
+    """Evaluate the performance of the model on test-set or train-set
+
+    Parameters
+    ----------
+    data : np.ndarray
+        The test-set data
+    model : nn.Module
+        The trained Neural Network
+    loss_fn : _type_
+        The loss function of the trained Neural Network
+    mode : str, optional
+        Options are: ["step", "train", "test", "model"]
+
+    Returns
+    -------
+    tuple
+        Calculated metrics, depending on the mode
     """
-    Evaluate the performance of the model on the current stage
-    """
+    # Split features and labels
     X, y = featureLabelSplit(data)
 
     # Set the model to evaluation mode
     model.eval()
     with torch.no_grad():
         pred = model(X)
-        test_loss = loss_fn(pred, y).item()
-        correct = np.sum(np.array(pred.argmax(1) == y)) / len(y)
+        # The geometric mean of accuracy for each label
+        correct = geometric_mean_score(pred.argmax(1), y)
+        loss = loss_fn(pred, y).item()
 
-        if test:
+    match mode:
+        # Return metrics for 'train' mode
+        case "train":
             print(
-                f"Test Error: \n Accuracy: {(100 * correct):>0.1f}%, Avg loss: {test_loss:>8f} \n"
+                f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n"
+            )
+            return loss
+        case "step":
+            print(f"G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
+            pass
+
+        # Return metrics for 'step' mode
+        case "train":
+            print(
+                f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n"
+            )
+            return loss
+
+        # Return metrics for 'test' mode
+        case "test":
+            print(
+                f"Test Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n"
+            )
+            return loss
+
+        # Return metrics for 'model' mode
+        case "model":
+            _pred = pred.argmax(1)
+
+            f1_weighted = f1_score(y, _pred, average="weighted")
+            precision_weighted = precision_score(y, _pred, average="weighted")
+            recall_weighted = recall_score(y, _pred, average="weighted")
+
+            return [correct, f1_weighted, precision_weighted, recall_weighted]
+
+        # Raise ValueError for invalid mode
+        case _:
+            raise ValueError(
+                "Please enter a solid value for parameter `mode`, options are ('step', 'train', 'test', 'model')"
             )
 
-    return test_loss
 
-
-def evaluateModel(data: np.ndarray, model: nn.Module) -> list:
-    """
-    Evaluate the performance of the trained model
-    """
-    X, y = featureLabelSplit(data)
-
-    model.eval()
-    with torch.no_grad():
-        pred = model(X)
-
-    pred = pred.argmax(1)
-
-    f1_micro = f1_score(y, pred, average="micro")
-    f1_macro = f1_score(y, pred, average="macro")
-    precision = precision_score(y, pred, average="weighted")
-    recall = recall_score(y, pred, average="weighted")
-
-    return [f1_micro, f1_macro, precision, recall]
-
-
-def earlyStopping(
-    loss_list: list, count: int, patience: int = 10, threshold: float = 1e-4
+def early_stopping(
+    loss_list: list[float], patience: int = 10, threshold: float = 1e-4
 ) -> bool:
     """
-    Stop training if no progress is made anymore
+    Check if the given list of losses has converged based on a threshold and patience value.
+
+    Args:
+        loss_list (list): A list of losses.
+        patience (int, optional): The number of previous losses to consider for convergence. Defaults to 10.
+        threshold (float, optional): The threshold value for convergence. Defaults to 1e-4.
+
+    Returns:
+        bool: True if the losses have converged, False otherwise.
     """
-    if len(loss_list) < 2:
+    # Check if there are enough losses to check convergence
+    if len(loss_list) < patience + 1:
+        print("Not enough losses to check convergence")
         return False
-    if (loss_list[-1] - loss_list[-2]) ** 2 < threshold:
-        count += 1
-    else:
-        count = 0
-    if count > patience:
+
+    # Calculate the differences between consecutive losses
+    diff = np.abs(np.diff(loss_list)[-patience:])
+
+    # Check if all differences are below the threshold
+    if np.all(diff <= threshold):
+        print("Losses have converged")
         return True
+
+    print("Losses have not converged")
     return False
 
 
-def countUniqueLabels(data: np.ndarray) -> int:
-    # Extract the last column of the 2D NumPy array
-    labels_column = data[:, -1]
+def count_unique_labels(data: np.ndarray) -> int:
+    """Count the number of unique labels
 
-    # Find the unique labels
-    unique_labels = np.unique(labels_column)
+    Parameters
+    ----------
+    data : np.ndarray
+        The dataset to count unique labels
 
-    return len(unique_labels)
+    Returns
+    -------
+    int
+        The number of unique labels
+    """
+    # If data is empty, return 0
+    if len(data) == 0:
+        print("Data is empty")
+        return 0
+
+    unique_labels = len(np.unique(data[:, -1]))
+
+    # If the last column of data has NA values, subtract 1 from the total count
+    if np.isnan(data[:, -1]).any():
+        unique_labels -= 1
+        print("NA values found in the last column")
+
+    print(f"Number of unique labels: {unique_labels}")
+
+    return unique_labels
 
 
-def createLossDataframe(data: List[List], epoch_count: int) -> pl.DataFrame:
-    schema = ["Dataset"] + [f"epoch{i}" for i in range(1, epoch_count + 1)]
+def does_model_exist(directory: str, dataset_name: str) -> tuple[bool, str]:
+    """
+    Check if a model file exists in the specified directory.
 
-    return pl.DataFrame(data, schema)
+    Parameters:
+        directory (str): The directory where the model file is located.
+        dataset_name (str): The name of the dataset used to train the model.
 
-
-def createMetricsDataframe(data: List[List]) -> pl.DataFrame:
-    schema = [
-        "Dataset",
-        "f1 micro",
-        "f1 macro",
-        "precision weighted",
-        "recall weighted",
-    ]
-
-    return pl.DataFrame(data, schema)
-
-
-def doesModelExist(directory: str, dataset_name: str) -> Tuple[bool, str]:
-    # Define the Models folder path
-    models_folder = directory
-
+    Returns:
+        tuple[bool, str]: A tuple containing a boolean value indicating whether the model file exists and the path to the model file.
+    """
     # Remove the "_train" suffix from dataset_name
     model_name = dataset_name.replace("_train", "") + ".pt"
 
     # Construct the full path to the model file
-    model_path = os.path.join(models_folder, model_name)
+    model_path = os.path.join(directory, model_name)
+
+    # Print the model path for debugging
+    print(f"Model path: {model_path}")
 
     # Check if the model file exists
-    return os.path.exists(model_path), model_path
+    model_exists = os.path.exists(model_path)
+
+    # Print whether the model file exists or not for debugging
+    print(f"Model exists: {model_exists}")
+
+    return model_exists, model_path
