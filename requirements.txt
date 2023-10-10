@@ -8,3 +8,5 @@ black
 polars
 plotly
 kaleido
+imblearn
+pytest

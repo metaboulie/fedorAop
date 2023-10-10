@@ -2,6 +2,7 @@ PATH = "../Datasets"
 
 # For training
 BATCH_SIZE = 64
+N_STEPS_TO_PRINT = 20
 N_EPOCHS = 10
 
 # For optimizer, in this case, Adam
