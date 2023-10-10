@@ -1,13 +1,14 @@
 from abc import abstractmethod, ABC
 from dataclasses import dataclass, field
-
 import numpy as np
 import scipy
 import torch
 
 
 def prosGenerator(
-    distribution: scipy.stats.rv_continuous = scipy.stats.norm, size: int = 100, *args
+    distribution: scipy.stats.rv_continuous = scipy.stats.norm,
+    size: int = 100,
+    *args,
 ) -> np.ndarray:
     """Generate an 1D-array filled with probabilities from a given distribution
 
@@ -26,33 +27,32 @@ def prosGenerator(
     return scipy.special.softmax(distribution.rvs(size=size, *args))
 
 
-def featureLabelSplit(data: np.ndarray) -> tuple[torch.Tensor, torch.Tensor]:
-    """Given a dataset, split it into feature-matrix and label-series, i.e. X and y
+def feature_label_split(data: np.ndarray) -> tuple[torch.Tensor, torch.Tensor]:
+    """
+    Split the given dataset into feature-matrix and label-series, i.e. X and y.
 
     Parameters
     ----------
     data : np.ndarray
-        The data to be split
+        The data to be split.
 
     Returns
     -------
     tuple[torch.Tensor, torch.Tensor]
         X, y
     """
-    try:
-        assert isinstance(data, np.ndarray)
-    except AssertionError as e:
-        e.add_note("The type of the input data must be numpy.ndarray")
-        raise
+    # Ensure that the input data is of type np.ndarray
+    assert isinstance(
+        data, np.ndarray
+    ), "The type of the input data must be numpy.ndarray"
 
+    # Split the data into feature-matrix and label-series
     X = data[:, :-1]
     y = data[:, -1]
 
-    X_tensor, y_tensor = torch.tensor(
-        X, dtype=torch.float32, requires_grad=True
-    ), torch.tensor(
-        y, dtype=torch.long
-    )  # ! The dtype of y must be `torch.long`
+    # Convert the feature-matrix and label-series to tensors
+    X_tensor = torch.tensor(X, dtype=torch.float32, requires_grad=True)
+    y_tensor = torch.tensor(y, dtype=torch.long)  # The dtype of y must be `torch.long`
 
     return X_tensor, y_tensor
 
@@ -83,10 +83,10 @@ class Sample(ABC):
     """
 
     batch_size: int = 64
-    data: np.ndarray = field(default_factory=np.ndarray, repr=False)
+    data: np.ndarray = field(default_factory=np.ndarray, init=True)
     size: int = field(init=False)
     numLabels: int = field(init=False)
-    choices: list = field(default_factory=list, init=False, repr=False)
+    choices: list = field(default_factory=list, init=False)
 
     def __post_init__(self):
         """Initialize the number of the observations and unique labels in the input data"""
@@ -96,7 +96,7 @@ class Sample(ABC):
     @property
     @abstractmethod
     def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
-        """Sample the data for BGD in different ways in different subClasses"""
+        """Sample the data for BGD in different ways in different SubClasses"""
         pass
 
 
@@ -142,7 +142,7 @@ class Resample(Sample):
     distribution: scipy.stats.rv_continuous = field(
         init=True, default=scipy.stats.uniform
     )
-    weights: np.ndarray[float] = field(init=False, repr=False)
+    weights: np.ndarray[float] = field(init=False)
 
     def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Use the generated weights to sample the data, overrides from the `sample` method from the superClass Sample
@@ -158,7 +158,7 @@ class Resample(Sample):
             range(self.size), self.batch_size, False, self.weights
         )
 
-        return featureLabelSplit(self.data[self.choices])
+        return feature_label_split(self.data[self.choices])
 
 
 @dataclass()
@@ -241,7 +241,7 @@ class Bootstrap(Sample):
                     True,
                 )
             )
-        return featureLabelSplit(self.data[self.choices])
+        return feature_label_split(self.data[self.choices])
 
 
 @dataclass()
@@ -363,7 +363,7 @@ class SampleWithImputation(Bootstrap):
             X_Batch, y_Batch
         """
         self.choices = np.random.choice(range(self.size), self.batch_size, True)
-        return featureLabelSplit(self.data[self.choices])
+        return feature_label_split(self.data[self.choices])
 
 
 # NotImplemented
@@ -402,11 +402,4 @@ class DeepResample(Resample):
 
     @property
     def dataSplit(self) -> tuple[torch.Tensor, torch.Tensor]:
-        return featureLabelSplit(self.data)
-
-
-@dataclass()
-class Imputation:
-    data: np.ndarray = field(init=True)  # ! The input data must be sorted
-
-    pass
+        return feature_label_split(self.data)

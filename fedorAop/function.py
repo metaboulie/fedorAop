@@ -5,7 +5,7 @@ from sklearn.metrics import f1_score, precision_score, recall_score
 from torch import nn
 import numpy as np
 from fedorAop.config import N_STEPS_TO_PRINT
-from fedorAop.sample import featureLabelSplit, Sample, Bootstrap
+from fedorAop.sample import feature_label_split, Sample, Bootstrap
 from imblearn.metrics import geometric_mean_score
 
 
@@ -61,7 +61,7 @@ def train_loop(
 
 def evaluate(
     data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step"
-) -> list | float | None:
+) -> dict | float | None:
     """Evaluate the performance of the model on test-set or train-set
 
     Parameters
@@ -77,11 +77,11 @@ def evaluate(
 
     Returns
     -------
-    tuple
+    dict | float | None
         Calculated metrics, depending on the mode
     """
     # Split features and labels
-    X, y = featureLabelSplit(data)
+    X, y = feature_label_split(data)
 
     # Set the model to evaluation mode
     model.eval()
@@ -124,7 +124,12 @@ def evaluate(
             precision_weighted = precision_score(y, _pred, average="weighted")
             recall_weighted = recall_score(y, _pred, average="weighted")
 
-            return [correct, f1_weighted, precision_weighted, recall_weighted]
+            return {
+                "g-mean_accuracy": correct,
+                "f1_weighted": f1_weighted,
+                "precision_weighted": precision_weighted,
+                "recall_weighted": recall_weighted,
+            }
 
         # Raise ValueError for invalid mode
         case _:
