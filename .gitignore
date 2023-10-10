@@ -20,4 +20,4 @@ TODO.md
 
 __pycache__/
 
-imblearn/
+*.pytest_cache
