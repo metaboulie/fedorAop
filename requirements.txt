@@ -13,3 +13,5 @@ deepdiff
 seaborn
 matplotlib
 pandas
+dash
+tqdm
