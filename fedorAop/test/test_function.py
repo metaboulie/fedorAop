@@ -1,5 +1,4 @@
 import numpy as np
-import pytest
 from fedorAop.function import early_stopping, count_unique_labels
 
 

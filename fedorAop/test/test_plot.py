@@ -1,12 +1,6 @@
 import unittest
-import pytest
 import os
-import plotly.graph_objects as go
-from pathlib import Path
-
 from fedorAop.plot import plot_loss, plot_metrics
-
-
 import matplotlib.pyplot as plt
 from pathlib import Path
 
