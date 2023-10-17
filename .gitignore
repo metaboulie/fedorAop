@@ -1,24 +1,40 @@
-codes
+# PyCharm
 .idea
-ref.
-Datasets
-Models/
-.DS_Store
-unit-test.py
-ProportionPrediction.pptx
-*.html
-
-# won't be ignored in feature
-hyptest.py
-view.py
-.vscode
 qodana.yaml
-.github
-fedorAop/tidy.py
+
+# References
+ref.
+
+# Datasets
+Datasets
+
+# Models
+Models/
+
+# Macos
+.DS_Store
+
+# Foreign files
+ProportionPrediction.pptx
+
+# All redundant files
+*.html
 *.pdf
+
+# VSCode
+.vscode
+
+# Github
+.github
+
+# Python scripts under development
+stats.py
+tidy.py
+
+# TODO
 TODO.md
 
+# Caches
 __pycache__/
-
 *.pytest_cache
-stats.py
+
