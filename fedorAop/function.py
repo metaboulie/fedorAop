@@ -67,7 +67,7 @@ def evaluate(
     Parameters
     ----------
     data : np.ndarray
-        The test-set data
+        The data
     model : nn.Module
         The trained Neural Network
     loss_fn : _type_
@@ -187,16 +187,16 @@ def count_unique_labels(data: np.ndarray) -> int:
         print("Data is empty")
         return 0
 
-    unique_labels = len(np.unique(data[:, -1]))
+    num_unique_labels = len(np.unique(data[:, -1]))
 
     # If the last column of data has NA values, subtract 1 from the total count
     if np.isnan(data[:, -1]).any():
-        unique_labels -= 1
+        num_unique_labels -= 1
         print("NA values found in the last column")
 
-    print(f"Number of unique labels: {unique_labels}")
+    print(f"Number of unique labels: {num_unique_labels}")
 
-    return unique_labels
+    return num_unique_labels
 
 
 def does_model_exist(directory: str, dataset_name: str) -> tuple[bool, str]:
