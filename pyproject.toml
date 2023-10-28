@@ -6,7 +6,7 @@ authors = ["metaboulie <eugeneheiner14@gmail.com>"]
 readme = "README.md"
 
 [tool.poetry.dependencies]
-python = "==3.11"
+python = ">=3.11,<3.12"
 torch = "^2.1.0"
 scipy = "^1.11.3"
 numpy = "^1.26.1"
