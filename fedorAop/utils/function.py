@@ -1,12 +1,15 @@
 import os
 
-import torch
-from sklearn.metrics import f1_score, precision_score, recall_score
-from torch import nn
 import numpy as np
-from fedorAop.config import N_STEPS_TO_PRINT
-from fedorAop.sample import feature_label_split, Sample, Bootstrap
+
+import torch
+from torch import nn
+
 from imblearn.metrics import geometric_mean_score
+from sklearn.metrics import f1_score, precision_score, recall_score
+
+from fedorAop.config import N_STEPS_TO_PRINT
+from fedorAop.models.sample_models import feature_label_split, Sample, Bootstrap
 
 
 def train_loop(
@@ -32,7 +35,7 @@ def train_loop(
     - count: int
         The count of the current step.
     - sample_model: Sample, optional
-        The model to resample the dataset, see sample.py for more details.
+        The model to resample the dataset, see sample_models.py for more details.
         Defaults to Bootstrap.
     """
 
@@ -59,9 +62,7 @@ def train_loop(
         evaluate(data=data, model=model, loss_fn=_loss_fn, mode="step")
 
 
-def evaluate(
-    data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step"
-) -> dict | float | None:
+def evaluate(data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step") -> dict | float | None:
     """Evaluate the performance of the model on test-set or train-set
 
     Parameters
@@ -94,9 +95,7 @@ def evaluate(
     match mode:
         # Return metrics for 'train' mode
         case "train":
-            print(
-                f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n"
-            )
+            print(f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
             return loss
         case "step":
             print(f"G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
@@ -104,16 +103,12 @@ def evaluate(
 
         # Return metrics for 'step' mode
         case "train":
-            print(
-                f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n"
-            )
+            print(f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
             return loss
 
         # Return metrics for 'test' mode
         case "test":
-            print(
-                f"Test Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n"
-            )
+            print(f"Test Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
             return loss
 
         # Return metrics for 'model' mode
@@ -138,9 +133,7 @@ def evaluate(
             )
 
 
-def early_stopping(
-    loss_list: list[float], patience: int = 10, threshold: float = 1e-4
-) -> bool:
+def early_stopping(loss_list: list[float], patience: int = 10, threshold: float = 1e-4) -> bool:
     """
     Check if the given list of losses has converged based on a threshold and patience value.
 

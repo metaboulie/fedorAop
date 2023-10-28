@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch
-from fedorAop.io import (
+from fedorAop.utils.io import (
     read_h5ad_datasets,
     convert_dataset_dict_to_np_dict,
 )

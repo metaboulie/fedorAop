@@ -1,5 +1,5 @@
 import numpy as np
-from fedorAop.function import early_stopping, count_unique_labels
+from fedorAop.utils.function import early_stopping, count_unique_labels
 
 
 def test_early_stopping():
@@ -60,3 +60,8 @@ def test_count_unique_labels():
     # Test with a dataset containing NA values
     data = np.array([[1, 2], [2, 3], [4, np.nan]])
     assert count_unique_labels(data) == 2
+
+
+if __name__ == "__main__":
+    test_early_stopping()
+    test_count_unique_labels()

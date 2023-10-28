@@ -4,7 +4,7 @@ warnings.simplefilter("ignore", UserWarning)
 
 from config import *
 from model import NeuralNetwork, MLP, InputLayer, EmbedLayer
-from function import (
+from fedorAop.utils.function import (
     count_unique_labels,
     does_model_exist,
     evaluate,
@@ -12,11 +12,11 @@ from function import (
     early_stopping,
 )
 from torch.optim.lr_scheduler import ReduceLROnPlateau
-from plot import plot_loss, plot_metrics
-from fedorAop.io import get_data_dict
+from fedorAop.utils.plot import plot_loss, plot_metrics
+from fedorAop.utils.io import get_data_dict
 import torch
 from torch import nn
-from sample import Resample, Bootstrap, SampleWithImputation
+from fedorAop.models.sample_models import Resample, Bootstrap, SampleWithImputation
 
 # Import data
 data_dict = get_data_dict(PATH)
@@ -98,7 +98,7 @@ def main(sampleModel: str = "SampleWithImputation"):
         )
 
         # Create the corresponding sampling model based on the sampleModel argument
-        # See sample.py for details
+        # See sample_models.py for details
         match sampleModel:
             case "Resample":
                 sample_model = Resample(data=data)
