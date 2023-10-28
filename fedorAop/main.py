@@ -88,14 +88,10 @@ def main(sampleModel: str = "SampleWithImputation"):
         train_loss_list, test_loss_list = [], []
 
         # Initialize the optimizer to do the gradient descent
-        optimizer = torch.optim.Adam(
-            model.parameters(), LR, betas=(BETA1, BETA2), eps=EPS
-        )
+        optimizer = torch.optim.Adam(model.parameters(), LR, betas=(BETA1, BETA2), eps=EPS)
 
         # Initialize the Learning-rate Scheduler
-        scheduler = ReduceLROnPlateau(
-            optimizer, "min", patience=PATIENCE, threshold=THRESHOLD
-        )
+        scheduler = ReduceLROnPlateau(optimizer, "min", patience=PATIENCE, threshold=THRESHOLD)
 
         # Create the corresponding sampling model based on the sampleModel argument
         # See sample_models.py for details
@@ -108,9 +104,7 @@ def main(sampleModel: str = "SampleWithImputation"):
                 sample_model = SampleWithImputation(data=data)
                 sample_model.iterLabels()
             case _:
-                raise ValueError(
-                    f"sampleModel must be one of ['Resample', 'Bootstrap', 'SampleWithImputation']"
-                )
+                raise ValueError(f"sampleModel must be one of ['Resample', 'Bootstrap', 'SampleWithImputation']")
 
         # Train the model
         for epoch in range(N_EPOCHS):
@@ -147,12 +141,8 @@ def main(sampleModel: str = "SampleWithImputation"):
         test_loss_results[dataset.replace("_train", "")] = test_loss_list
 
         # Evaluate the model metrics on the train and test data
-        train_metrics_result = evaluate(
-            data_dict[datasets[i]], model, loss_fn, mode="model"
-        )
-        test_metrics_result = evaluate(
-            data_dict[datasets[i - 1]], model, loss_fn, mode="model"
-        )
+        train_metrics_result = evaluate(data_dict[datasets[i]], model, loss_fn, mode="model")
+        test_metrics_result = evaluate(data_dict[datasets[i - 1]], model, loss_fn, mode="model")
 
         # Store the metrics in the corresponding dictionaries for each dataset
         train_metrics_results[dataset.replace("_train", "")] = train_metrics_result
