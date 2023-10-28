@@ -1,6 +1,6 @@
 import unittest
 import os
-from fedorAop.plot import plot_loss, plot_metrics
+from fedorAop.utils.plot import plot_loss, plot_metrics
 import matplotlib.pyplot as plt
 from pathlib import Path
 

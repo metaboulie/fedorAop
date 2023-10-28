@@ -1,0 +1,29 @@
+[tool.poetry]
+name = "fedoraop"
+version = "0.1.0"
+description = "Delve into Machine Learning"
+authors = ["metaboulie <eugeneheiner14@gmail.com>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = ">=3.11,<3.12"
+torch = "^2.1.0"
+scipy = "^1.11.3"
+numpy = "^1.26.1"
+anndata = "^0.10.2"
+scikit-learn = "^1.3.2"
+plotly = "^5.17.0"
+imblearn = "^0.0"
+imbalanced-learn = "^0.11.0"
+pytest = "^7.4.3"
+deepdiff = "^6.6.1"
+seaborn = "^0.13.0"
+matplotlib = "^3.8.0"
+pandas = "^2.1.1"
+dash = "^2.14.0"
+tqdm = "^4.66.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

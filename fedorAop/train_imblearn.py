@@ -44,7 +44,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 
-from fedorAop.io import get_data_dict
+from fedorAop.utils.io import get_data_dict
 from fedorAop.config import PATH
 
 # Get the datasets
@@ -265,6 +265,7 @@ def train_model(
     _type: str,
     _samplers: list[str],
     _result: pd.DataFrame,
+    clf=RandomForestClassifier(n_jobs=-1, random_state=42),
     no_sampler: bool = False,
 ):
     """
@@ -274,6 +275,7 @@ def train_model(
         _type (str): The type of model to train.
         _samplers (list[str]): The list of samplers to use for training.
         _result (pd.DataFrame): The dataframe to store the results.
+        clf: The classifier to use for training. Defaults to RandomForestClassifier.
         no_sampler (bool, optional): If True, train the model without using any sampler. Defaults to False.
 
     Returns:
@@ -303,11 +305,11 @@ def train_model(
                 y_test_dict[dataset_name],
             )
             # Initialize the classifier
-            clf = RandomForestClassifier(n_jobs=-1, random_state=0)
+            _clf = clf
             # Fit the classifier
-            clf.fit(X_train, y_train)
+            _clf.fit(X_train, y_train)
             # Predict the test data
-            pred = clf.predict(X_test)
+            pred = _clf.predict(X_test)
             # Calculate the score
             score.append(geometric_mean_score(y_test, pred))
             # Append the score to the dataframe
@@ -352,11 +354,12 @@ def train_model(
                     # Sample the train data with sampler
                     X_res, y_res = _sampler.fit_resample(X_train, y_train)
                     # Initialize the classifier
-                    clf = RandomForestClassifier(n_jobs=-1, random_state=0)
+                    _clf = clf
+                    # _clf = RandomForestClassifier(n_jobs=-1, random_state=0)
                     # Fit the classifier
-                    clf.fit(X_res, y_res)
+                    _clf.fit(X_res, y_res)
                     # Predict the test data
-                    pred = clf.predict(X_test)
+                    pred = _clf.predict(X_test)
                     # Calculate and record the score
                     score.append(geometric_mean_score(y_test, pred))
                 # If the sampling failed
@@ -375,7 +378,7 @@ def train_model(
             _result.index = _result.index + 1
 
 
-def main():
+def main(clf=RandomForestClassifier(n_jobs=-1, random_state=42)):
     """
     Main function that executes the entire program.
 
@@ -418,14 +421,12 @@ def main():
     )
 
     # Train the models
-    train_model("Null", _samplers=[], _result=result, no_sampler=True)
-    train_model("Under-Sampling", _samplers=under_samplers, _result=result)
-    train_model("Over-Sampling", _samplers=over_samplers, _result=result)
-    train_model("Combined-Sampling", _samplers=combined_samplers, _result=result)
+    train_model("Null", _samplers=[], _result=result, clf=clf, no_sampler=True)
+    train_model("Under-Sampling", _samplers=under_samplers, clf=clf, _result=result)
+    train_model("Over-Sampling", _samplers=over_samplers, clf=clf, _result=result)
+    train_model("Combined-Sampling", _samplers=combined_samplers, clf=clf, _result=result)
 
-    result = average_rank(
-        result, ["Cancer", "FACS_CD8", "PBMC_Batch", "PBMC_COVID", "cSCC"]
-    )
+    result = average_rank(result, ["Cancer", "FACS_CD8", "PBMC_Batch", "PBMC_COVID", "cSCC"])
     # TODO: sort the result with "Type"
 
     # Initialize the Dash app
@@ -511,9 +512,7 @@ def main():
             + [
                 {
                     "if": {
-                        "filter_query": "{{Cancer}}={}".format(
-                            _
-                        ),  # Highlight the top three cells in "Cancer" column
+                        "filter_query": "{{Cancer}}={}".format(_),  # Highlight the top three cells in "Cancer" column
                         "column_id": "Cancer",
                     },
                     "backgroundColor": "lightblue",
@@ -559,9 +558,7 @@ def main():
             + [
                 {
                     "if": {
-                        "filter_query": "{{cSCC}}={}".format(
-                            _
-                        ),  # Highlight the top three cells in "cSCC" column
+                        "filter_query": "{{cSCC}}={}".format(_),  # Highlight the top three cells in "cSCC" column
                         "column_id": "cSCC",
                     },
                     "backgroundColor": "lightblue",
@@ -583,9 +580,7 @@ def main():
             + [
                 {
                     "if": {
-                        "filter_query": "{{Average Rank}}={}".format(
-                            _
-                        ),  # Highlight the top three sampling methods
+                        "filter_query": "{{Average Rank}}={}".format(_),  # Highlight the top three sampling methods
                         "column_id": "Sampler",
                     },
                     "backgroundColor": "lightblue",

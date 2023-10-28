@@ -1,31 +1,41 @@
+# Caches
+__pycache__/
+*.pytest_cache
+
+# Github
+.github
+
+# poetry
+.venv
+poetry.lock
+
+# VSCode
+.vscode
+
 # PyCharm
 .idea
 qodana.yaml
 
-# References
-ref.
-
-# Datasets
-Datasets
-
-# Models
-Models/
-
 # Macos
 .DS_Store
 
-# Foreign files
+# For the project
+## Datasets
+Datasets
+
+## References
+ref.
+
+## Models
+Models/
+
+## Foreign files
 ProportionPrediction.pptx
 
 # All redundant files
 *.html
 *.pdf
-
-# VSCode
-.vscode
-
-# Github
-.github
+*.ipynb
 
 # Python scripts under development
 stats.py
@@ -34,7 +44,8 @@ tidy.py
 # TODO
 TODO.md
 
-# Caches
-__pycache__/
-*.pytest_cache
+# Ideas
+Ideas.md
+
+
 

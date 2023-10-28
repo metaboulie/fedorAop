@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 import unittest
-from fedorAop.sample import feature_label_split
+from fedorAop.models.sample_models import feature_label_split
 
 
 class TestFeatureLabelSplit(unittest.TestCase):
