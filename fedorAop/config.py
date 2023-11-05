@@ -2,12 +2,16 @@
 ## Paths
 ### The path of the datasets
 DATASET_PATH = "../Datasets"
+### The path of the results
+RESULTS_PATH = "../results"
+### The path of the saved models
+SAVED_MODELS_PATH = "../saved_models"
 
 ## Neural Networks
 ### Mini-Batch Gradient Decent
 BATCH_SIZE = 64
 N_STEPS_TO_PRINT = 20
-N_EPOCHS = 10
+N_EPOCHS = 5
 
 ### Adam
 ADAM_BETA1, ADAM_BETA2 = 1e-3, 0.999

@@ -1,0 +1,102 @@
+{
+  "Cancer_train": {
+    "g_mean_accuracy": 0.9991239741186944,
+    "weighted_macro_f1": 0.999396026134491,
+    "weighted_cross_entropy_loss": 0.0027595863211899996,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "train"
+  },
+  "Cancer_test": {
+    "g_mean_accuracy": 0.9958026788260793,
+    "weighted_macro_f1": 0.9967685341835022,
+    "weighted_cross_entropy_loss": 0.004276959225535393,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "test"
+  },
+  "FACS_CD8_train": {
+    "g_mean_accuracy": 0.6451878716206882,
+    "weighted_macro_f1": 0.7238995432853699,
+    "weighted_cross_entropy_loss": 0.27358508110046387,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "train"
+  },
+  "FACS_CD8_test": {
+    "g_mean_accuracy": 0.6749364552923457,
+    "weighted_macro_f1": 0.6771658062934875,
+    "weighted_cross_entropy_loss": 0.7147009968757629,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "test"
+  },
+  "PBMC_Batch_train": {
+    "g_mean_accuracy": 0.523084391970832,
+    "weighted_macro_f1": 0.404998242855072,
+    "weighted_cross_entropy_loss": 0.22264067828655243,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "train"
+  },
+  "PBMC_Batch_test": {
+    "g_mean_accuracy": 0.0,
+    "weighted_macro_f1": 0.40127021074295044,
+    "weighted_cross_entropy_loss": 0.6476377248764038,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "test"
+  },
+  "PBMC_COVID_train": {
+    "g_mean_accuracy": 0.7632880834640544,
+    "weighted_macro_f1": 0.8480873107910156,
+    "weighted_cross_entropy_loss": 0.13293129205703735,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "train"
+  },
+  "PBMC_COVID_test": {
+    "g_mean_accuracy": 0.7000513435896337,
+    "weighted_macro_f1": 0.8371633291244507,
+    "weighted_cross_entropy_loss": 0.21530748903751373,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "test"
+  },
+  "cSCC_train": {
+    "g_mean_accuracy": 0.4178064958660134,
+    "weighted_macro_f1": 0.6984375715255737,
+    "weighted_cross_entropy_loss": 0.0626014843583107,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "train"
+  },
+  "cSCC_test": {
+    "g_mean_accuracy": 0.40695032879751636,
+    "weighted_macro_f1": 0.696707010269165,
+    "weighted_cross_entropy_loss": 0.09039302170276642,
+    "loss": "UnweightedCrossEntropyLoss",
+    "activation function": "ELU",
+    "sampling method": "SampleWithImputation",
+    "cost sensitive": "cost matrix",
+    "split": "test"
+  }
+}

@@ -1,5 +1,5 @@
 <div align="center">
-  <h1>fedorAop: Delve into Machine Learning</h1>
+  <h1>fedorAop: Balance between sampling, neural network and cost-sensitive learning</h1>
   <h6 align="right">
     Still under development and consideration
   </h6>
@@ -13,7 +13,7 @@
 
 ## Requirements
 
-- [Python==3.11 ](https://www.python.org/downloads/)
+- [Python==3.11](https://www.python.org/downloads/)
 - [pyproject.toml](pyproject.toml)
 
 ## Getting Started

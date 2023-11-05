@@ -4,8 +4,10 @@ import anndata as ad
 import numpy as np
 from sklearn.preprocessing import LabelEncoder
 import json
+from functools import cache
 
 
+@cache
 def read_h5ad_datasets(directory: str) -> dict[str, ad.AnnData]:
     """Read all datasets inside a given folder and use a dictionary to store them
 
@@ -27,6 +29,7 @@ def read_h5ad_datasets(directory: str) -> dict[str, ad.AnnData]:
     }
 
 
+@cache
 def h5ad_to_json(directory: str, cell_type_key: str) -> None:
     """Read .h5ad files and write their data, including cell type values, to individual JSON files.
 
@@ -79,6 +82,7 @@ def convert_dataset_dict_to_np_dict(dataset_dict: dict[str, ad.AnnData]) -> dict
     return dict(sorted(np_dict.items()))
 
 
+@cache
 def get_data_dict(directory: str) -> dict[str, np.ndarray]:
     """
     Generates a dictionary of data arrays from the datasets stored in the specified directory.

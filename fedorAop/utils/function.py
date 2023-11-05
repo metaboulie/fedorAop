@@ -62,7 +62,7 @@ def weighted_macro_f1(y_true: torch.Tensor, y_pred: torch.Tensor) -> torch.float
 
     wmf1 = 2 * (weighted_ppv * weighted_tpr) / (weighted_ppv + weighted_tpr)
 
-    return wmf1
+    return wmf1.item()
 
 
 def calculate_cost_matrix(labels: np.ndarray | torch.Tensor) -> torch.Tensor:
@@ -115,7 +115,7 @@ def predict_min_expected_cost_class(cost_matrix: torch.Tensor, logits: torch.Ten
 
 
 def evaluate(
-    data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step", cost_matrix: torch.Tensor = None
+    data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step", cost_matrix: torch.Tensor = None, **kwargs
 ) -> dict | None:
     """Evaluate the performance of the model on test-set or train-set
 
@@ -173,6 +173,7 @@ def evaluate(
                 "g_mean_accuracy": correct,
                 "weighted_macro_f1": weighted_macro_F1,
                 "weighted_cross_entropy_loss": weighted_cross_entropy_loss,
+                **kwargs,
             }
 
         # Raise ValueError for invalid mode

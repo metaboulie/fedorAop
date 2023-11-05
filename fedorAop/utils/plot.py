@@ -39,14 +39,14 @@ def plot_loss(loss_dict: dict[str, list[float]], split: str, filename: str) -> p
 
 
 # Plot the metrics results by dataset with bar groups
-def plot_metrics(metrics_dict: dict[str, dict[str, float]], split: str, filename: str) -> plt.Axes:
+def plot_metrics(metrics_dict: dict[str, dict[str, float]], filename: str) -> plt.Axes:
     data = pd.DataFrame(metrics_dict).transpose()
-    print(data)
-    ax = data.plot(kind="bar", figsize=(16, 6), rot=0)
-    ax.set_title(f"Metrics by Dataset in {split}")
+    ax = data.plot(kind="bar", figsize=(16, 7), rot=0)
+    ax.set_title(f"Metrics by Dataset")
     ax.set_xlabel("Dataset")
     ax.set_ylabel("Value")
     ax.legend(loc="best")
+    plt.xticks(rotation=10)
     plt.savefig(f"{Path.cwd().parent.parent}/images/{filename}.png")
     return ax
 
@@ -152,3 +152,13 @@ def plot_dash_table(result: pd.DataFrame, method_names: list[str], dataset_names
 
     # Run the Dash App
     app.run()
+
+
+if __name__ == "__main__":
+    import json
+
+    with open("../../results/METHOD5.json", "r") as f:
+        result = json.load(f)
+
+    filtered_data = {key: {k: v for k, v in value.items() if isinstance(v, float)} for key, value in result.items()}
+    plot_metrics(filtered_data, "METHOD5")

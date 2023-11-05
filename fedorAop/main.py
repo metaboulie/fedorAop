@@ -1,70 +1,112 @@
 import warnings
 
 warnings.simplefilter("ignore", UserWarning)
+warnings.simplefilter("ignore", FutureWarning)
 
 from config import *
-from model import NeuralNetwork, MLP, InputLayer, EmbedLayer
+from tqdm import tqdm
+
+from fedorAop.models.neural_network import NeuralNetwork, MLP, InputLayer, EmbedLayer, WeightedCrossEntropyLoss
+
 from fedorAop.utils.function import (
     count_unique_labels,
     does_model_exist,
     evaluate,
-    train_loop,
-    early_stopping,
+    calculate_cost_matrix,
+    calculate_class_weights,
 )
-from torch.optim.lr_scheduler import ReduceLROnPlateau
-from fedorAop.utils.plot import plot_loss, plot_metrics
 from fedorAop.utils.io import get_data_dict
+
+from imblearn.under_sampling import RandomUnderSampler
+
 import torch
-from torch import nn
-from fedorAop.models.sample_models import Resample, Bootstrap, SampleWithImputation
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
-# Import data
-data_dict = get_data_dict(PATH)
-datasets = list(data_dict.keys())
-
-# Initialize dicts for storing results for each dataset
-train_loss_results, test_loss_results, train_metrics_results, test_metrics_results = (
-    {},
-    {},
-    {},
-    {},
-)
+import json
 
 
-def main(sampleModel: str = "SampleWithImputation"):
-    """
-    The main function that performs the training and evaluation of a neural network model.
+if __name__ == "__main__":
+    # Import data
+    data_dict = get_data_dict(DATASET_PATH)
+    datasets = list(data_dict.keys())
 
-    Args:
-        sampleModel (str): The type of sampling model to use. Default is "SampleWithImputation".
-    """
-    # Iterate over the datasets
-    for i in range(len(datasets)):
+    # Initialize dicts for storing results for each dataset
+    train_metrics_results, test_metrics_results = {}, {}
+
+    model_info = {
+        "loss": "WeightedCrossEntropyLoss",
+        "activation function": "ELU",
+        "sampling method": "RandomUnderSampler",
+        "cost sensitive": "cost matrix",
+    }
+
+    for i in tqdm(range(len(datasets))):
         if i % 2 == 0:
             # if i != 3:
             continue
 
         # Get the dataset
         dataset = datasets[i]
-
+        print(f"\nDataset: {dataset}\n")
         # Get the data
         data = data_dict[dataset]
-
+        # Get the cost matrix
+        cost_matrix = calculate_cost_matrix(data[:, -1])
         # Get the number of features
         in_features = data.shape[1] - 1
-
         # Get the number of labels
         n_labels = count_unique_labels(data)
-
+        # Extract the labels
+        class_labels = torch.tensor(data[:, -1], dtype=torch.int)
+        # Calculate the class weights
+        class_weights = calculate_class_weights(class_labels)
+        # Create the loss function
+        # loss_fn = nn.CrossEntropyLoss()
+        loss_fn = WeightedCrossEntropyLoss(weights=class_weights)
         # Check whether there exists a trained model or not
-        model_exist, model_path = does_model_exist("../Models", dataset)
-
+        model_exist, model_path = does_model_exist(SAVED_MODELS_PATH, dataset)
         # If there exists a trained model, load it
         if model_exist:
             print(f"Model file exists for dataset '{dataset}'.")
             # Load the model
             model = torch.load(model_path)
+            # Evaluate the model metrics on the train and test data
+            train_metrics_result = evaluate(
+                data_dict[datasets[i]],
+                model,
+                loss_fn,
+                mode="model",
+                cost_matrix=cost_matrix,
+                **model_info,
+                split="train",
+            )
+            test_metrics_result = evaluate(
+                data_dict[datasets[i - 1]],
+                model,
+                loss_fn,
+                mode="model",
+                cost_matrix=cost_matrix,
+                **model_info,
+                split="test",
+            )
 
+            train_metrics_results[datasets[i]] = train_metrics_result
+            test_metrics_results[datasets[i - 1]] = test_metrics_result
+
+            method_path = f"{RESULTS_PATH}/METHOD5.json"
+            with open(method_path, "r") as json_file:
+                if json_file.read():
+                    json_file.seek(0)
+                    result = json.load(json_file)
+                else:
+                    result = {}
+            result.update(train_metrics_results)
+            result.update(test_metrics_results)
+
+            with open(method_path, "w") as json_file:
+                json.dump(result, json_file)
+
+            continue
         # If there doesn't exist a trained model, then create one.
         else:
             # Create the model
@@ -74,85 +116,49 @@ def main(sampleModel: str = "SampleWithImputation"):
             # Create the embedding layer
             embed_layer = EmbedLayer(in_features=in_features, out_features=300)
             # Create the MLP
-            mlp_layers = MLP(in_features=300, out_features=n_labels, n_layers=3)
+            mlp_layers = MLP(in_features=300, out_features=n_labels, n_layers=3, softmax=False)
             # Combine the layers
             model.buildLayers(input_layer, embed_layer, mlp_layers)
 
         # Number of steps in each epoch
         n_steps = data.shape[0] // BATCH_SIZE
-
-        # Loss function
-        loss_fn = nn.CrossEntropyLoss()
-
-        # Initialize two lists to record the loss
-        train_loss_list, test_loss_list = [], []
-
         # Initialize the optimizer to do the gradient descent
-        optimizer = torch.optim.Adam(model.parameters(), LR, betas=(BETA1, BETA2), eps=EPS)
-
+        optimizer = torch.optim.Adam(model.parameters(), ADAM_LR, betas=(ADAM_BETA1, ADAM_BETA2), eps=ADAM_EPS)
         # Initialize the Learning-rate Scheduler
-        scheduler = ReduceLROnPlateau(optimizer, "min", patience=PATIENCE, threshold=THRESHOLD)
+        scheduler = ReduceLROnPlateau(
+            optimizer, "min", patience=EARLY_STOPPING_PATIENCE, threshold=EARLY_STOPPING_THRESHOLD
+        )
+        # sample_model = SampleWithImputation(data=data)
+        # sample_model.iter_labels()
+        sample_model = RandomUnderSampler()
+        X, y = data[:, :-1], data[:, -1]
 
-        # Create the corresponding sampling model based on the sampleModel argument
-        # See sample_models.py for details
-        match sampleModel:
-            case "Resample":
-                sample_model = Resample(data=data)
-            case "Bootstrap":
-                sample_model = Bootstrap(data=data)
-            case "SampleWithImputation":
-                sample_model = SampleWithImputation(data=data)
-                sample_model.iterLabels()
-            case _:
-                raise ValueError(f"sampleModel must be one of ['Resample', 'Bootstrap', 'SampleWithImputation']")
-
-        # Train the model
-        for epoch in range(N_EPOCHS):
-            # Initialize the count the number of steps
+        for epoch in tqdm(range(N_EPOCHS)):
             count = 0
             print(f"Epoch {epoch + 1}\n-------------------------------")
             model.train()
 
-            # Train the model for N_STEPS in each epoch
-            for step in range(n_steps):
+            for _ in tqdm(range(n_steps)):
                 count += 1
-                train_loop(data, model, loss_fn, optimizer, count, sample_model)
+                # Sample the data
+                # X_train, y_train = sample_model.sample()
+                X_train, y_train = sample_model.fit_resample(X, y)
+                X_train, y_train = torch.tensor(X_train, dtype=torch.float32, requires_grad=True), torch.tensor(
+                    y_train, dtype=torch.long
+                )
+                # Train the model
+                optimizer.zero_grad()
+                pred = model(X_train)
+                loss = loss_fn(pred, y_train)
+                loss.backward()
+                optimizer.step()
+                if count % N_STEPS_TO_PRINT == 0:
+                    evaluate(data=data, model=model, loss_fn=loss_fn, mode="step", cost_matrix=cost_matrix)
 
-            # Record the loss for the current epoch for train and test data
-            train_loss = evaluate(data, model, loss_fn, "train")
-            test_loss = evaluate(data_dict[datasets[i - 1]], model, loss_fn, "test")
-            # Append the losses to the corresponding lists
-            train_loss_list.append(train_loss)
-            test_loss_list.append(test_loss)
-
-            # Check for early stopping
-            if early_stopping(test_loss_list, PATIENCE, THRESHOLD):
-                break
-
-            # Update the learning rate
-            scheduler.step(test_loss)
-
+            evaluate(data=data, model=model, loss_fn=loss_fn, mode="train", cost_matrix=cost_matrix)
+            evaluate(
+                data=data_dict[datasets[i - 1]], model=model, loss_fn=loss_fn, mode="test", cost_matrix=cost_matrix
+            )
         # Save the trained model
         torch.save(model, model_path)
         print("Model is saved")
-
-        # Store the loss_list in the corresponding dictionaries for each dataset
-        train_loss_results[dataset.replace("_train", "")] = train_loss_list
-        test_loss_results[dataset.replace("_train", "")] = test_loss_list
-
-        # Evaluate the model metrics on the train and test data
-        train_metrics_result = evaluate(data_dict[datasets[i]], model, loss_fn, mode="model")
-        test_metrics_result = evaluate(data_dict[datasets[i - 1]], model, loss_fn, mode="model")
-
-        # Store the metrics in the corresponding dictionaries for each dataset
-        train_metrics_results[dataset.replace("_train", "")] = train_metrics_result
-        test_metrics_results[dataset.replace("_train", "")] = test_metrics_result
-
-    plot_loss(train_loss_results, "train", "train_loss")
-    plot_loss(test_loss_results, "test", "test_loss")
-    plot_metrics(train_metrics_results, "train", "train_metrics")
-    plot_metrics(test_metrics_results, "test", "test_metrics")
-
-
-if __name__ == "__main__":
-    main()
