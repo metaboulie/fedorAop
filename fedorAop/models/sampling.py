@@ -1,3 +1,5 @@
+"""Sampling Models"""
+
 from abc import abstractmethod, ABC
 from dataclasses import dataclass, field
 
