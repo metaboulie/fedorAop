@@ -1,7 +1,8 @@
 from pathlib import Path
+
 import matplotlib.pyplot as plt
-import seaborn as sns
 import pandas as pd
+import seaborn as sns
 
 sns.set_theme(style="darkgrid", palette="Set3")
 
@@ -50,78 +51,70 @@ def plot_metrics(metrics_dict: dict[str, dict[str, float]], split: str, filename
     return ax
 
 
-def plot_dash_table(result):
-    pass
-    # Initialize the Dash app
+def plot_dash_table(result: pd.DataFrame, method_names: list[str], dataset_names: list[str], summary_names: list[str]):
     app = Dash(__name__)
+
+    method_columns = [
+        {
+            "name": ["Method", method_name],
+            "id": method_name,
+            "type": "text",
+        }
+        for method_name in method_names
+    ]
+
+    dataset_columns = [
+        {
+            "name": ["Dataset", dataset_name],
+            "id": dataset_name,
+            "type": "numeric",
+            "format": Format(
+                scheme=Scheme.fixed,
+                precision=4,
+                nully="NA",
+            ),
+        }
+        for dataset_name in dataset_names
+    ]
+
+    summary_columns = [
+        {
+            "name": ["Summary", summary_name],
+            "id": summary_name,
+            "type": "numeric",
+            "format": Format(
+                scheme=Scheme.fixed,
+                precision=4,
+                nully="NA",
+            ),
+        }
+        for summary_name in summary_names
+    ]
 
     # A list of schemas for columns of the table
     columns = [
-        {"name": ["Method", "Type"], "id": "Type", "type": "text"},
-        {"name": ["Method", "Sampler"], "id": "Sampler", "type": "text"},
+        *method_columns,
+        *dataset_columns,
+        *summary_columns,
+    ]
+
+    highlight_top_three_cells_in_column = [
         {
-            "name": ["Dataset", "Cancer"],
-            "id": "Cancer",
-            "type": "numeric",
-            "format": Format(scheme=Scheme.fixed, precision=4, nully="NA"),
-        },
-        {
-            "name": ["Dataset", "FACS_CD8"],
-            "id": "FACS_CD8",
-            "type": "numeric",
-            "format": Format(
-                scheme=Scheme.fixed,
-                precision=4,
-                nully="NA",
-            ),
-        },
-        {
-            "name": ["Dataset", "PBMC_Batch"],
-            "id": "PBMC_Batch",
-            "type": "numeric",
-            "format": Format(
-                scheme=Scheme.fixed,
-                precision=4,
-                nully="NA",
-            ),
-        },
-        {
-            "name": ["Dataset", "PBMC_COVID"],
-            "id": "PBMC_COVID",
-            "type": "numeric",
-            "format": Format(
-                scheme=Scheme.fixed,
-                precision=4,
-                nully="NA",
-            ),
-        },
-        {
-            "name": ["Dataset", "cSCC"],
-            "id": "cSCC",
-            "type": "numeric",
-            "format": Format(
-                scheme=Scheme.fixed,
-                precision=4,
-                nully="NA",
-            ),
-        },
-        {
-            "name": ["Summary", "Average Rank"],
-            "id": "Average Rank",
-            "type": "numeric",
-            "format": Format(
-                scheme=Scheme.fixed,
-                precision=1,
-                nully="NA",
-            ),
-        },
+            "if": {
+                "filter_query": "{{{}}}={}".format(dataset_name, _),
+                "column_id": dataset_name,
+            },
+            "backgroundColor": "lightblue",
+        }
+        for dataset_name in dataset_names
+        for _ in result[dataset_name].nlargest(4)
     ]
 
     app.layout = dash_table.DataTable(  # Customize the layout
         columns=columns,
         data=result.to_dict("records"),
         merge_duplicate_headers=True,  # Merge duplicate headers
-        style_as_list_view=True,  # Use list view
+        # style_as_list_view=True,  # Use list view
         style_cell={
             "textAlign": "center",  # Align text to center
         },
@@ -132,79 +125,14 @@ def plot_dash_table(result):
                     "backgroundColor": "rgb(248, 248, 248)",
                 },
             ]
-            + [
-                {
-                    "if": {
-                        "filter_query": "{{Cancer}}={}".format(_),  # Highlight the top three cells in "Cancer" column
-                        "column_id": "Cancer",
-                    },
-                    "backgroundColor": "lightblue",
-                }
-                for _ in result["Cancer"].nlargest(4)
-            ]
-            + [
-                {
-                    "if": {
-                        "filter_query": "{{FACS_CD8}}={}".format(
-                            _
-                        ),  # Highlight the top three cells in "FACS_CD8" column
-                        "column_id": "FACS_CD8",
-                    },
-                    "backgroundColor": "lightblue",
-                }
-                for _ in result["FACS_CD8"].nlargest(4)
-            ]
-            + [
-                {
-                    "if": {
-                        "filter_query": "{{PBMC_Batch}}={}".format(
-                            _
-                        ),  # Highlight the top three cells in "PBMC_Batch" column
-                        "column_id": "PBMC_Batch",
-                    },
-                    "backgroundColor": "lightblue",
-                }
-                for _ in result["PBMC_Batch"].nlargest(4)
-            ]
-            + [
-                {
-                    "if": {
-                        "filter_query": "{{PBMC_COVID}}={}".format(
-                            _
-                        ),  # Highlight the top three cells in "PBMC_COVID" column
-                        "column_id": "PBMC_COVID",
-                    },
-                    "backgroundColor": "lightblue",
-                }
-                for _ in result["PBMC_COVID"].nlargest(4)
-            ]
-            + [
-                {
-                    "if": {
-                        "filter_query": "{{cSCC}}={}".format(_),  # Highlight the top three cells in "cSCC" column
-                        "column_id": "cSCC",
-                    },
-                    "backgroundColor": "lightblue",
-                }
-                for _ in result["cSCC"].nlargest(4)
-            ]
+            + highlight_top_three_cells_in_column
             + [
                 {
                     "if": {
                         "filter_query": "{{Average Rank}}={}".format(
                             _
                         ),  # Highlight the top three cells in "Average_rank" column
-                        "column_id": "Average Rank",
-                    },
-                    "backgroundColor": "lightblue",
-                }
-                for _ in result["Average Rank"].nsmallest(4)
-            ]
-            + [
-                {
-                    "if": {
-                        "filter_query": "{{Average Rank}}={}".format(_),  # Highlight the top three sampling methods
-                        "column_id": "Sampler",
+                        "column_id": ["Average Rank", "Sampler"],
                     },
                     "backgroundColor": "lightblue",
                 }
