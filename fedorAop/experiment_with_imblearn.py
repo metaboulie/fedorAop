@@ -45,10 +45,10 @@ from sklearn.preprocessing import MinMaxScaler
 from sklearn.decomposition import PCA
 
 from fedorAop.utils.io import get_data_dict
-from fedorAop.config import PATH
+from fedorAop.config import DATASET_PATH
 
 # Get the datasets
-data_dict = get_data_dict(PATH)
+data_dict = get_data_dict(DATASET_PATH)
 # Get the datasets' names
 dataset_names = list(data_dict.keys())
 # Get the indexes of the datasets
