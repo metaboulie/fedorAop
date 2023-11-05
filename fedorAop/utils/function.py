@@ -1,68 +1,81 @@
 import os
 
+import numpy
 import numpy as np
-
 import torch
-from torch import nn
-
 from imblearn.metrics import geometric_mean_score
 from sklearn.metrics import f1_score, precision_score, recall_score
+from torch import nn
 
 from fedorAop.config import N_STEPS_TO_PRINT
-from fedorAop.models.sample_models import feature_label_split, Sample, Bootstrap
+from fedorAop.models.sampling import feature_label_split, Sample, Bootstrap
 
 
-def train_loop(
-    data: np.ndarray,
-    model: nn.Module,
-    loss_fn,
-    optimizer,
-    count: int,
-    sample_model: Sample = Bootstrap,
-):
+def find_highest_logits_for_columns(logits: torch.Tensor, k: int = 10):
+    """For each column, find the k rows where the value is k-largest"""
+    pass
+
+
+def calculate_cost_matrix(labels: numpy.ndarray) -> torch.Tensor:
     """
-    Trains the model during every step.
+    Calculates the cost matrix based on the given labels.
 
-    Parameters:
-    - data: np.ndarray
-        The dataset to train.
-    - model: nn.Module
-        The Neural Network.
-    - loss_fn: _type_
-        The loss function of the Neural Network.
-    - optimizer: _type_
-        The optimizer to perform gradient descent.
-    - count: int
-        The count of the current step.
-    - sample_model: Sample, optional
-        The model to resample the dataset, see sample_models.py for more details.
-        Defaults to Bootstrap.
+    Args:
+        labels (numpy.ndarray): Array of labels.
+
+    Returns:
+        torch.Tensor: The calculated cost matrix.
     """
+    # Count the unique labels and their occurrences
+    unique_labels, label_counts = np.unique(labels, return_counts=True)
+    num_classes = len(unique_labels)
 
-    # Utilize the sampling-model to resample the dataset
-    X_train, y_train = sample_model.sample
+    # Initialize the cost matrix with all ones
+    cost_matrix = np.ones((num_classes, num_classes), dtype=np.float32)
 
-    # Clear the gradients
-    optimizer.zero_grad()
+    # Calculate the cost for each pair of classes
+    for i in range(num_classes):
+        for j in range(num_classes):
+            if i == j:
+                # Set the cost to 0 for the same class
+                cost_matrix[i, j] = 0
+            else:
+                if label_counts[i] > label_counts[j]:
+                    # Calculate the cost based on the label occurrences
+                    cost_matrix[i, j] = label_counts[i] / label_counts[j]
 
-    # Get the predictions of the neural network
-    pred = model(X_train)
+    # Convert the cost matrix to a torch tensor
+    cost_matrix = torch.tensor(cost_matrix, dtype=torch.float32)
 
-    # Calculate the loss
-    _loss_fn = loss_fn(pred, y_train)
-
-    # Calculate gradients
-    _loss_fn.backward()
-
-    # Perform gradient descent
-    optimizer.step()
-
-    # Print result every M steps
-    if count % N_STEPS_TO_PRINT == 0:
-        evaluate(data=data, model=model, loss_fn=_loss_fn, mode="step")
+    return cost_matrix
 
 
-def evaluate(data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step") -> dict | float | None:
+def predict_min_expected_cost_class(cost_matrix: torch.Tensor, logits: torch.Tensor) -> torch.Tensor:
+    """
+    Predicts the class with the minimum expected cost based on the given cost matrix and logits.
+
+    Args:
+        cost_matrix (torch.Tensor): A tensor representing the cost matrix.
+        logits (torch.Tensor): A tensor representing the logits.
+
+    Returns:
+        torch.Tensor: A tensor representing the class with the minimum expected cost.
+    """
+    # Calculate the expected costs
+    expected_costs = torch.matmul(cost_matrix, logits.T).T
+
+    # # Print the first 10 cost values
+    # print(f"\nFirst 10th cost: \n{expected_costs[:10]}\n")
+
+    # Find the class with the minimum expected cost
+    min_expected_cost_class = torch.argmin(expected_costs, dim=1)
+
+    return min_expected_cost_class
+
+
+def evaluate(
+    data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step", cost_matrix: np.ndarray = None
+) -> dict | None:
     """Evaluate the performance of the model on test-set or train-set
 
     Parameters
@@ -75,7 +88,9 @@ def evaluate(data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step") ->
         The loss function of the trained Neural Network
     mode : str, optional
         Options are: ["step", "train", "test", "model"]
-
+        Defaults to "step".
+    cost_matrix : np.ndarray, optional
+        The cost matrix.
     Returns
     -------
     dict | float | None
@@ -88,33 +103,31 @@ def evaluate(data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step") ->
     model.eval()
     with torch.no_grad():
         pred = model(X)
+        print(f"First 10th logits{pred[:10]}")
+        _pred = predict_min_expected_cost_class(cost_matrix, pred)
+        # _pred = torch.argmin(pred, dim=1)
+        print("Predicted class with the smallest expected cost:", torch.bincount(_pred))
+        print(f"First 10th predictions{_pred[:10]}")
         # The geometric mean of accuracy for each label
-        correct = geometric_mean_score(pred.argmax(1), y)
+        correct = geometric_mean_score(_pred, y)
         loss = loss_fn(pred, y).item()
 
     match mode:
-        # Return metrics for 'train' mode
-        case "train":
-            print(f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
-            return loss
+        # Return metrics for 'step' mode
         case "step":
             print(f"G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
             pass
 
-        # Return metrics for 'step' mode
+        # Return metrics for 'train' mode
         case "train":
             print(f"Train Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
-            return loss
 
         # Return metrics for 'test' mode
         case "test":
             print(f"Test Error: \n G-Mean Accuracy: {(100 * correct): >0.1f}%, Loss: {loss: >5f} \n")
-            return loss
 
         # Return metrics for 'model' mode
         case "model":
-            _pred = pred.argmax(1)
-
             f1_weighted = f1_score(y, _pred, average="weighted")
             precision_weighted = precision_score(y, _pred, average="weighted")
             recall_weighted = recall_score(y, _pred, average="weighted")
