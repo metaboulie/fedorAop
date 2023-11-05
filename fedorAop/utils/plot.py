@@ -143,6 +143,11 @@ def plot_dash_table(result: pd.DataFrame, method_names: list[str], dataset_names
             "fontWight": "bold",
             "backgroundColor": "#F5F5F5",
         },
+        sort_action="native",
+        sort_mode="multi",
+        filter_action="native",
+        row_selectable="multi",
+        column_selectable="multi",
     )
 
     # Run the Dash App
