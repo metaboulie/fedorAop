@@ -1,14 +1,13 @@
 import os
 
-import numpy
 import numpy as np
 import torch
 from imblearn.metrics import geometric_mean_score
-from sklearn.metrics import f1_score, precision_score, recall_score
 from torch import nn
+from torcheval.metrics.functional import multiclass_precision, multiclass_recall
 
-from fedorAop.config import N_STEPS_TO_PRINT
-from fedorAop.models.sampling import feature_label_split, Sample, Bootstrap
+from fedorAop.models.neural_network import WeightedCrossEntropyLoss
+from fedorAop.models.sampling import feature_label_split
 
 
 def find_highest_logits_for_columns(logits: torch.Tensor, k: int = 10):
@@ -16,22 +15,73 @@ def find_highest_logits_for_columns(logits: torch.Tensor, k: int = 10):
     pass
 
 
-def calculate_cost_matrix(labels: numpy.ndarray) -> torch.Tensor:
+def calculate_class_weights(labels: np.ndarray | torch.Tensor) -> torch.Tensor:
+    """
+    Calculate the class weights for a given dataset.
+
+    Args:
+        labels (np.ndarray | torch.Tensor): The input labels.
+
+    Returns:
+        torch.Tensor: The class weights.
+    """
+    labels = torch.tensor(labels, dtype=torch.int)
+
+    # Count the number of occurrences of each class label
+    class_counts = torch.bincount(labels)
+
+    return torch.max(class_counts) / class_counts if len(class_counts) > 0 else torch.tensor([])
+
+
+def weighted_macro_f1(y_true: torch.Tensor, y_pred: torch.Tensor) -> torch.float32:
+    """
+    Calculate the weighted macro F1-score.
+
+    Args:
+        y_true (torch.Tensor): True labels.
+        y_pred (torch.Tensor): Predicted labels.
+
+    Returns:
+        torch.float32: Weighted macro F1-score.
+    """
+    # Compute the number of instances for each class
+    n_instances = len(y_true)
+    n_classes = len(torch.unique(y_true))
+    n_instances_per_class = torch.bincount(y_true)
+
+    # Compute the weights for each class
+    weights = [(n_instances - n) / ((n_classes - 1) * n_instances) for n in n_instances_per_class]
+    weights = torch.tensor(weights, dtype=torch.float32)
+
+    # Compute the class-specific metrics
+    ppv = multiclass_precision(y_pred, y_true, average=None, num_classes=n_classes)
+    tpr = multiclass_recall(y_pred, y_true, average=None, num_classes=n_classes)
+
+    weighted_ppv = (ppv * weights).sum(dim=0) / weights.sum(dim=0)
+    weighted_tpr = (tpr * weights).sum(dim=0) / weights.sum(dim=0)
+
+    wmf1 = 2 * (weighted_ppv * weighted_tpr) / (weighted_ppv + weighted_tpr)
+
+    return wmf1
+
+
+def calculate_cost_matrix(labels: np.ndarray | torch.Tensor) -> torch.Tensor:
     """
     Calculates the cost matrix based on the given labels.
 
     Args:
-        labels (numpy.ndarray): Array of labels.
+        labels (torch.Tensor): Array of labels.
 
     Returns:
         torch.Tensor: The calculated cost matrix.
     """
     # Count the unique labels and their occurrences
-    unique_labels, label_counts = np.unique(labels, return_counts=True)
+    labels = torch.tensor(labels, dtype=torch.int)
+    unique_labels, label_counts = torch.unique(labels, return_counts=True)
     num_classes = len(unique_labels)
 
     # Initialize the cost matrix with all ones
-    cost_matrix = np.ones((num_classes, num_classes), dtype=np.float32)
+    cost_matrix = torch.ones((num_classes, num_classes), dtype=torch.float32)
 
     # Calculate the cost for each pair of classes
     for i in range(num_classes):
@@ -43,9 +93,6 @@ def calculate_cost_matrix(labels: numpy.ndarray) -> torch.Tensor:
                 if label_counts[i] > label_counts[j]:
                     # Calculate the cost based on the label occurrences
                     cost_matrix[i, j] = label_counts[i] / label_counts[j]
-
-    # Convert the cost matrix to a torch tensor
-    cost_matrix = torch.tensor(cost_matrix, dtype=torch.float32)
 
     return cost_matrix
 
@@ -64,17 +111,11 @@ def predict_min_expected_cost_class(cost_matrix: torch.Tensor, logits: torch.Ten
     # Calculate the expected costs
     expected_costs = torch.matmul(cost_matrix, logits.T).T
 
-    # # Print the first 10 cost values
-    # print(f"\nFirst 10th cost: \n{expected_costs[:10]}\n")
-
-    # Find the class with the minimum expected cost
-    min_expected_cost_class = torch.argmin(expected_costs, dim=1)
-
-    return min_expected_cost_class
+    return torch.argmin(expected_costs, dim=1)
 
 
 def evaluate(
-    data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step", cost_matrix: np.ndarray = None
+    data: np.ndarray, model: nn.Module, loss_fn, mode: str = "step", cost_matrix: torch.Tensor = None
 ) -> dict | None:
     """Evaluate the performance of the model on test-set or train-set
 
@@ -102,15 +143,11 @@ def evaluate(
     # Set the model to evaluation mode
     model.eval()
     with torch.no_grad():
-        pred = model(X)
-        print(f"First 10th logits{pred[:10]}")
-        _pred = predict_min_expected_cost_class(cost_matrix, pred)
-        # _pred = torch.argmin(pred, dim=1)
-        print("Predicted class with the smallest expected cost:", torch.bincount(_pred))
-        print(f"First 10th predictions{_pred[:10]}")
+        logits = model(X)
+        y_pred = predict_min_expected_cost_class(cost_matrix, logits)
         # The geometric mean of accuracy for each label
-        correct = geometric_mean_score(_pred, y)
-        loss = loss_fn(pred, y).item()
+        correct = geometric_mean_score(y_pred, y)
+        loss = loss_fn(logits, y).item()
 
     match mode:
         # Return metrics for 'step' mode
@@ -128,15 +165,14 @@ def evaluate(
 
         # Return metrics for 'model' mode
         case "model":
-            f1_weighted = f1_score(y, _pred, average="weighted")
-            precision_weighted = precision_score(y, _pred, average="weighted")
-            recall_weighted = recall_score(y, _pred, average="weighted")
+            class_weights = calculate_class_weights(data[:, -1])
+            weighted_cross_entropy_loss = WeightedCrossEntropyLoss(class_weights).forward(logits, y).item()
+            weighted_macro_F1 = weighted_macro_f1(y, y_pred)
 
             return {
-                "g-mean_accuracy": correct,
-                "f1_weighted": f1_weighted,
-                "precision_weighted": precision_weighted,
-                "recall_weighted": recall_weighted,
+                "g_mean_accuracy": correct,
+                "weighted_macro_f1": weighted_macro_F1,
+                "weighted_cross_entropy_loss": weighted_cross_entropy_loss,
             }
 
         # Raise ValueError for invalid mode
@@ -214,7 +250,8 @@ def does_model_exist(directory: str, dataset_name: str) -> tuple[bool, str]:
         dataset_name (str): The name of the dataset used to train the model.
 
     Returns:
-        tuple[bool, str]: A tuple containing a boolean value indicating whether the model file exists and the path to the model file.
+        tuple[bool, str]: A tuple containing a boolean value indicating whether
+        the model file exists and the path to the model file.
     """
     # Remove the "_train" suffix from dataset_name
     model_name = dataset_name.replace("_train", "") + ".pt"

@@ -1,9 +1,51 @@
+import unittest
+
+import numpy as np
+import torch
+
 from fedorAop.utils.function import (
     early_stopping,
     count_unique_labels,
     calculate_cost_matrix,
     predict_min_expected_cost_class,
+    weighted_macro_f1,
+    calculate_class_weights,
 )
+
+
+class TestCalculateClassWeights(unittest.TestCase):
+    def test_single_class(self):
+        labels = np.array([0, 0, 0, 0])
+        expected_weights = torch.tensor([1.0])
+        weights = calculate_class_weights(labels)
+        self.assertTrue(torch.all(torch.eq(weights, expected_weights)))
+
+    def test_multiple_classes(self):
+        labels = np.array([0, 0, 1, 1, 2, 2, 2])
+        expected_weights = torch.tensor([1.5, 1.5, 1.0])
+        weights = calculate_class_weights(labels)
+        self.assertTrue(torch.all(torch.eq(weights, expected_weights)))
+
+    def test_empty_labels(self):
+        labels = np.array([])
+        expected_weights = torch.tensor([])
+        weights = calculate_class_weights(labels)
+        self.assertTrue(torch.all(torch.eq(weights, expected_weights)))
+
+
+class TestWeightedMacroF1(unittest.TestCase):
+    def test_weighted_macro_f1(self):
+        # Test case 1: Two classes with equal number of instances
+        y_true = torch.tensor([0, 1, 0, 1])
+        y_pred = torch.tensor([0, 0, 1, 1])
+        expected_wmf1 = torch.tensor(0.5)
+        self.assertEqual(weighted_macro_f1(y_true, y_pred), expected_wmf1)
+
+        # Test case 2: Three classes with unequal number of instances
+        y_true = torch.tensor([0, 1, 2, 0, 1, 1])
+        y_pred = torch.tensor([0, 1, 2, 1, 0, 1])
+        expected_wmf1 = torch.tensor(0.75)
+        self.assertAlmostEqual(weighted_macro_f1(y_true, y_pred).item(), expected_wmf1.item())
 
 
 def test_early_stopping():
@@ -66,66 +108,46 @@ def test_count_unique_labels():
     assert count_unique_labels(data) == 2
 
 
-def test_calculate_cost_matrix():
-    # # Test case 1: Labels with only one class
-    # labels = np.array([0, 0, 0, 0])
-    # expected_output = np.array([[0]])
-    # assert np.array_equal(calculate_cost_matrix(labels), expected_output)
+class TestCalculateCostMatrix(unittest.TestCase):
+    def test_same_class(self):
+        labels = np.array([0, 0, 0, 0])
+        expected_cost_matrix = torch.tensor([[0]], dtype=torch.float32)
+        cost_matrix = calculate_cost_matrix(labels)
+        self.assertTrue(torch.all(torch.eq(cost_matrix, expected_cost_matrix)))
 
-    # Test case 2: Labels with two classes
-    labels = np.array([0, 0, 1, 1])
-    expected_output = np.array([[0, 2], [0.5, 0]])
-    assert np.array_equal(calculate_cost_matrix(labels), expected_output)
+    def test_different_classes(self):
+        labels = np.array([0, 1, 2, 3])
+        expected_cost_matrix = torch.tensor(
+            [[0, 1, 1, 1], [1, 0, 1, 1], [1, 1, 0, 1], [1, 1, 1, 0]],
+            dtype=torch.float32,
+        )
+        cost_matrix = calculate_cost_matrix(labels)
+        self.assertTrue(torch.all(torch.eq(cost_matrix, expected_cost_matrix)))
 
-    # Test case 3: Labels with three classes
-    labels = np.array([0, 1, 1, 2, 2, 2])
-    expected_output = np.array([[0, 1, 1], [2, 0, 0.5], [2, 0.5, 0]])
-    assert np.array_equal(calculate_cost_matrix(labels), expected_output)
-
-    # Test case 4: Labels with four classes
-    labels = np.array([0, 1, 2, 2, 3, 3, 3, 3])
-    expected_output = np.array([[0, 2, 2, 4], [0.5, 0, 1, 2], [0.5, 1, 0, 2], [0.25, 0.5, 0.5, 0]])
-    assert np.array_equal(calculate_cost_matrix(labels), expected_output)
-
-    print("All test cases pass")
-
-
-import numpy as np
-import unittest
+    def test_multiple_occurrences(self):
+        labels = np.array([0, 0, 1, 1, 1, 2, 2, 2, 2])
+        expected_cost_matrix = torch.tensor([[0, 1, 1], [3 / 2, 0, 1], [2, 4 / 3, 0]], dtype=torch.float32)
+        cost_matrix = calculate_cost_matrix(labels)
+        self.assertTrue(torch.all(torch.eq(cost_matrix, expected_cost_matrix)))
 
 
 class TestPredictMinExpectedCostClass(unittest.TestCase):
-    def test_min_expected_cost_class(self):
-        # Test case where the expected costs are [0.5, 0.2, 0.8, 0.4]
-        # The minimum expected cost class is 1 (index starts from 0)
-        cost_matrix = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-        prediction_probabilities = np.array([0.1, 0.4, 0.2, 0.3])
-        expected_min_class = 1
+    def setUp(self):
+        # Create test inputs
+        self.cost_matrix = torch.tensor([[1, 2, 3], [4, 5, 6], [7, 8, 9]], dtype=torch.float32)
+        self.logits = torch.tensor([[0.1, 0.2, 0.7], [0.3, 0.4, 0.3], [0.6, 0.2, 0.2]])
 
-        result = predict_min_expected_cost_class(cost_matrix, prediction_probabilities)
-        self.assertEqual(result, expected_min_class)
+    def test_predict_min_expected_cost_class(self):
+        # Call the function
+        result = predict_min_expected_cost_class(self.cost_matrix, self.logits)
 
-    def test_empty_cost_matrix(self):
-        # Test case where the cost matrix is empty
-        # The function should raise a ValueError
-        cost_matrix = np.array([])
-        prediction_probabilities = np.array([0.1, 0.4, 0.2, 0.3])
-
-        with self.assertRaises(ValueError):
-            predict_min_expected_cost_class(cost_matrix, prediction_probabilities)
-
-    def test_empty_prediction_probabilities(self):
-        # Test case where the prediction probabilities are empty
-        # The function should raise a ValueError
-        cost_matrix = np.array([[1, 2, 3, 4], [5, 6, 7, 8]])
-        prediction_probabilities = np.array([])
-
-        with self.assertRaises(ValueError):
-            predict_min_expected_cost_class(cost_matrix, prediction_probabilities)
+        # Check the output shape
+        self.assertEqual(result.shape, (3,))
+        # Check the output values
+        self.assertEqual(result.tolist(), [0, 0, 0])
 
 
 if __name__ == "__main__":
     test_early_stopping()
     test_count_unique_labels()
-    test_calculate_cost_matrix()
     unittest.main()
