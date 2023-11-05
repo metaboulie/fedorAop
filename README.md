@@ -27,7 +27,7 @@ exa  # `ls` in macos or `dir` in windows, the `Datasets` folder should appear
 poetry init
 poetry env use python3.11
 poetry update
-mkdir Models
+mkdir saved_models
 ```
 
 - Check the `doc` folder for further information
