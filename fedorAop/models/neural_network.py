@@ -4,9 +4,18 @@ import torch
 import torch.nn.functional as F
 from torch import nn
 
+from fedorAop.config import (
+    FOCAL_LOSS_ALPHA,
+    FOCAL_LOSS_GAMMA,
+    RNN_NUM_LAYERS,
+    RNN_DROPOUT_RATE,
+    MLP_DROPOUT_RATE,
+    MLP_NUM_LAYERS,
+)
+
 
 class FocalLoss(nn.Module):
-    def __init__(self, alpha=0.25, gamma=2, logits=True, reduce=True):
+    def __init__(self, alpha=FOCAL_LOSS_ALPHA, gamma=FOCAL_LOSS_GAMMA, logits=True, reduce=True):
         super(FocalLoss, self).__init__()
         self.alpha = alpha
         self.gamma = gamma
@@ -103,9 +112,9 @@ class RNNLayers(nn.Module):
         self,
         input_size: int,
         hidden_size: int,
-        num_layers: int = 2,
+        num_layers: int = RNN_NUM_LAYERS,
         batch_first: bool = True,
-        dropout: float = 0.2,
+        dropout: float = RNN_DROPOUT_RATE,
     ):
         super().__init__()
         self.layers = nn.RNN(
@@ -186,8 +195,8 @@ class MLP(nn.Module):
         self,
         in_features: int,
         out_features: int,
-        n_layers: int = 2,
-        dropout: float = 0.8,
+        n_layers: int = MLP_NUM_LAYERS,
+        dropout: float = MLP_DROPOUT_RATE,
         softmax: bool = True,
     ):
         super().__init__()
