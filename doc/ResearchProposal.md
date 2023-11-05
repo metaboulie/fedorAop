@@ -34,7 +34,7 @@
   observed that all datasets involve label shift.
 
 <div align="center">
-<img src="../images/labelProportions/Cancer.png" style="zoom:25%;"><img src="../images/labelProportions/FACS_CD8.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_Batch.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_COVID.png" style="zoom:25%;"><img src="../images/labelProportions/cSCC.png" style="zoom:25%;"><img src="../images/newplot.png" style="zoom:25%;">
+<img src="../images/labelProportions/Cancer.png" style="zoom:25%;"><img src="../images/labelProportions/FACS_CD8.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_Batch.png" style="zoom:25%;"><img src="../images/labelProportions/PBMC_COVID.png" style="zoom:25%;"><img src="../images/labelProportions/cSCC.png" style="zoom:25%;">
 </div>
 
 - Calculate the means of various genes for different cell categories in five training and test sets and create line
