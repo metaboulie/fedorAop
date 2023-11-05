@@ -1,4 +1,41 @@
+"""Loss functions and Layers for Neural Network"""
+
+import torch
+import torch.nn.functional as F
 from torch import nn
+
+
+class FocalLoss(nn.Module):
+    def __init__(self, alpha=0.25, gamma=2, logits=True, reduce=True):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha
+        self.gamma = gamma
+        self.logits = logits
+        self.reduce = reduce
+
+    def forward(self, inputs, targets):
+        if self.logits:
+            BCE_loss = F.binary_cross_entropy_with_logits(inputs, targets, reduce=False)
+        else:
+            BCE_loss = F.binary_cross_entropy(inputs, targets, reduce=False)
+
+        pt = torch.exp(-BCE_loss)
+        F_loss = self.alpha * (1 - pt) ** self.gamma * BCE_loss
+
+        if self.reduce:
+            return torch.mean(F_loss)
+        else:
+            return F_loss
+
+
+class WeightedCrossEntropyLoss(nn.Module):
+    def __init__(self, weights):
+        super(WeightedCrossEntropyLoss, self).__init__()
+        self.weights = weights
+        self.loss_fn = nn.CrossEntropyLoss(weight=self.weights, reduction="mean")
+
+    def forward(self, inputs, targets):
+        return self.loss_fn(inputs, targets)
 
 
 class InputLayer(nn.Module):
@@ -22,7 +59,8 @@ class InputLayer(nn.Module):
 
     def __init__(self, in_features: int):
         super().__init__()
-        self.input_layer = nn.Linear(in_features, in_features)
+        self.in_features = in_features
+        self.input_layer = nn.Linear(self.in_features, self.in_features)
 
     def forward(self, X):
         X = self.input_layer(X)
@@ -88,9 +126,7 @@ class RNNLayers(nn.Module):
 class LSTMLayers(nn.Module):
     """NotImplemented"""
 
-    def __init__(
-        self, input_size: int, hidden_size: int, num_layers: int, dropout: float
-    ):
+    def __init__(self, input_size: int, hidden_size: int, num_layers: int, dropout: float):
         super().__init__()
         self.layers = nn.LSTM(input_size, hidden_size, num_layers, dropout)
 
@@ -151,7 +187,7 @@ class MLP(nn.Module):
         in_features: int,
         out_features: int,
         n_layers: int = 2,
-        dropout: float = 0.5,
+        dropout: float = 0.8,
         softmax: bool = True,
     ):
         super().__init__()
@@ -181,6 +217,9 @@ class MLP(nn.Module):
         self.layers.append(nn.Linear(self._inter_features, self.out_features))
         if self.softmax:
             self.layers.append(nn.Softmax(dim=1))
+        else:
+            self.layers.append(nn.BatchNorm1d(self.out_features))
+            self.layers.append(nn.ELU())
 
     def forward(self, X):
         for layer in self.layers:
@@ -232,3 +271,22 @@ class NeuralNetwork(nn.Module):
 
     def __repr__(self):
         return f"{self.layers}"
+
+
+class DRLayers(nn.Module):
+    """Reduce the dimensionality of the data"""
+
+    def __init__(self, input_layer: nn.Module, mlp_layers: MLP):
+        super().__init__()
+        self.input_layer = input_layer
+        self.mlp = mlp_layers
+        self.out_features = self.mlp.out_features
+
+    def forward(self, X):
+        X = self.input_layer(X)
+        X = self.mlp.forward(X)
+        return X
+
+    def frozen(self):
+        for param in self.parameters():
+            param.requires_grad = False
