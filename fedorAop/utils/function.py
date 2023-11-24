@@ -5,14 +5,16 @@ import torch
 from imblearn.metrics import geometric_mean_score
 from torch import nn
 from torcheval.metrics.functional import multiclass_precision, multiclass_recall
+from tqdm import tqdm
 
-from fedorAop.models.neural_network import WeightedCrossEntropyLoss
+from fedorAop.config import *
+from fedorAop.models.neural_network import NeuralNetwork, WeightedCrossEntropyLoss
 from fedorAop.models.sampling import feature_label_split
 
 
 def find_highest_logits_for_columns(logits: torch.Tensor, k: int = 10):
     """For each column, find the k rows where the value is k-largest"""
-    pass
+    return NotImplemented
 
 
 def calculate_class_weights(labels: np.ndarray | torch.Tensor) -> torch.Tensor:
@@ -270,3 +272,90 @@ def does_model_exist(directory: str, dataset_name: str) -> tuple[bool, str]:
     print(f"Model exists: {model_exists}")
 
     return model_exists, model_path
+
+
+def train_phase_one(
+    data: np.ndarray,
+    test_data: np.ndarray,
+    model: NeuralNetwork,
+    loss_fn: nn.Module,
+    optimizer,
+    n_steps: int,
+    cost_matrix: torch.Tensor,
+    sample_model,
+):
+    for epoch in tqdm(range(N_EPOCHS)):
+        count = 0
+        print(f"Epoch {epoch + 1}\n-------------------------------")
+        model.train()
+
+        for _ in tqdm(range(n_steps)):
+            count += 1
+            X_train, y_train = sample_model.sample()
+            optimizer.zero_grad()
+            pred = model(X_train)
+            loss = loss_fn(pred, y_train)
+            loss.backward()
+            optimizer.step()
+            if count % N_STEPS_TO_PRINT == 0:
+                evaluate(data=data, model=model, loss_fn=loss_fn, mode="step", cost_matrix=cost_matrix)
+
+        evaluate(data=data, model=model, loss_fn=loss_fn, mode="train", cost_matrix=cost_matrix)
+        evaluate(data=test_data, model=model, loss_fn=loss_fn, mode="test", cost_matrix=cost_matrix)
+
+
+def train_phase_two(
+    data: np.ndarray,
+    test_data: np.ndarray,
+    model: NeuralNetwork,
+    loss_fn: nn.Module,
+    optimizer,
+    n_steps: int,
+    cost_matrix: torch.Tensor,
+    sample_model,
+):
+    X, y = data[:, :-1], data[:, -1]
+    model.layers[0].frozen()
+    active_layers = model.layers[1]
+    X = torch.tensor(X, dtype=torch.float32, requires_grad=False)
+    y = torch.tensor(y, dtype=torch.long)
+    X = model.layers[0].forward(X)
+    for epoch in tqdm(range(N_EPOCHS)):
+        count = 0
+        print(f"Epoch {epoch + 1}\n-------------------------------")
+        active_layers.train()
+
+        for _ in tqdm(range(n_steps)):
+            count += 1
+            X_train, y_train = sample_model.sample()
+            optimizer.zero_grad()
+            pred = active_layers(X_train)
+            loss = loss_fn(pred, y_train)
+            loss.backward()
+            optimizer.step()
+            if count % N_STEPS_TO_PRINT == 0:
+                model.layers[1] = active_layers
+                evaluate(data=data, model=model, loss_fn=loss_fn, mode="step", cost_matrix=cost_matrix)
+
+        model.layers[1] = active_layers
+
+        evaluate(data=data, model=model, loss_fn=loss_fn, mode="train", cost_matrix=cost_matrix)
+        evaluate(data=test_data, model=model, loss_fn=loss_fn, mode="test", cost_matrix=cost_matrix)
+
+
+def two_phase_train(
+    data: np.ndarray,
+    test_data: np.ndarray,
+    model: NeuralNetwork,
+    loss_fn: nn.Module,
+    cost_matrix: torch.Tensor,
+    sample_model_one,
+    sample_model_two,
+):
+    n_steps = data.shape[0] // BATCH_SIZE
+    optimizer = torch.optim.Adam(model.parameters(), ADAM_LR, betas=(ADAM_BETA1, ADAM_BETA2), eps=ADAM_EPS)
+
+    train_phase_one(data, test_data, model, loss_fn, optimizer, n_steps, cost_matrix, sample_model_one)
+
+    optimizer = torch.optim.Adam(model.parameters(), ADAM_LR, betas=(ADAM_BETA1, ADAM_BETA2), eps=ADAM_EPS)
+    train_phase_two(data, test_data, model, loss_fn, optimizer, n_steps, cost_matrix, sample_model_two)

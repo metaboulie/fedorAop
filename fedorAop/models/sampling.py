@@ -7,12 +7,13 @@ import numpy as np
 import pandas as pd
 import scipy
 import torch
+import imblearn
 from imblearn.combine import *
 from imblearn.over_sampling import *
 from imblearn.under_sampling import *
 from sklearn.linear_model import LogisticRegression
 
-from fedorAop.config import BATCH_SIZE
+from fedorAop.config import *
 
 
 def generate_probabilities(
@@ -239,6 +240,25 @@ class Sample(ABC):
     def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
         """Sample the data for BGD in different ways in different SubClasses"""
         pass
+
+
+class Imblearn(Sample):
+    model: str = field(init=False, default="RandomUnderSampler")
+    sample_model: imblearn = field(init=False, default=None)
+
+    def get_sampler(self, model: str, **kwargs):
+        self.model = model
+        # Use match
+        if self.model in IMBLEARN_UNDER_SAMPLING_MODELS:
+            self.sample_model = get_under_sampler(self.model, **kwargs)
+        pass
+
+    def sample(self) -> tuple[torch.Tensor, torch.Tensor]:
+        X, y = self.data[:, :-1], self.data[:, -1]
+        X_batch, y_batch = self.sample_model.fit_resample(X, y)
+        X_tensor = torch.tensor(X_batch, dtype=torch.float32, requires_grad=True)
+        y_tensor = torch.tensor(y_batch, dtype=torch.long)
+        return X_tensor, y_tensor
 
 
 @dataclass()
